@@ -99,7 +99,9 @@ class SnailCore:
         collectors_to_run = self.collectors
         if collector_names:
             collectors_to_run = {
-                name: cls for name, cls in self.collectors.items() if name in collector_names
+                name: cls
+                for name, cls in self.collectors.items()
+                if name in collector_names
             }
 
         logger.info(f"Running {len(collectors_to_run)} collectors")

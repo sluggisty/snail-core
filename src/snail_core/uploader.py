@@ -105,7 +105,9 @@ class Uploader:
         result = self._upload_with_retry(url, data, headers)
 
         if not result.success:
-            raise UploadError(f"Upload failed after {result.attempts} attempts: {result.error}")
+            raise UploadError(
+                f"Upload failed after {result.attempts} attempts: {result.error}"
+            )
 
         return result.response_data or {}
 

@@ -147,7 +147,9 @@ class SecurityCollector(BaseCollector):
             firewall["type"] = "iptables"
             firewall["running"] = True
             # Count rules
-            rules = [l for l in stdout.strip().split("\n") if l and not l.startswith("Chain")]
+            rules = [
+                l for l in stdout.strip().split("\n") if l and not l.startswith("Chain")
+            ]
             firewall["rules_count"] = len(rules)
 
         return firewall
@@ -244,8 +246,12 @@ class SecurityCollector(BaseCollector):
         for auth_file in ["/etc/pam.d/system-auth", "/etc/pam.d/common-auth"]:
             content = self.read_file(auth_file)
             if content:
-                pam["faillock_enabled"] = pam["faillock_enabled"] or "pam_faillock" in content
-                pam["pwquality_enabled"] = pam["pwquality_enabled"] or "pam_pwquality" in content
+                pam["faillock_enabled"] = (
+                    pam["faillock_enabled"] or "pam_faillock" in content
+                )
+                pam["pwquality_enabled"] = (
+                    pam["pwquality_enabled"] or "pam_pwquality" in content
+                )
 
         return pam
 

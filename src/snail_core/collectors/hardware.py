@@ -190,7 +190,12 @@ class HardwareCollector(BaseCollector):
         """Get block device information using lsblk."""
         devices = []
         stdout, _, rc = self.run_command(
-            ["lsblk", "-J", "-o", "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL,SERIAL,ROTA,RO"]
+            [
+                "lsblk",
+                "-J",
+                "-o",
+                "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL,SERIAL,ROTA,RO",
+            ]
         )
 
         if rc == 0 and stdout:

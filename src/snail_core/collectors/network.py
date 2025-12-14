@@ -272,7 +272,9 @@ class NetworkCollector(BaseCollector):
             rules = [
                 l
                 for l in stdout.split("\n")
-                if l.strip() and not l.startswith("Chain") and not l.startswith("target")
+                if l.strip()
+                and not l.startswith("Chain")
+                and not l.startswith("target")
             ]
             firewall["iptables"]["rules_count"] = len(rules)
 

@@ -143,7 +143,9 @@ class LogsCollector(BaseCollector):
         }
 
         # Get auth failures from last 24 hours
-        since = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
+        since = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
 
         stdout, _, rc = self.run_command(
             [

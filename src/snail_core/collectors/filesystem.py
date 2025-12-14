@@ -38,7 +38,12 @@ class FilesystemCollector(BaseCollector):
         for line in self.read_file_lines("/proc/mounts"):
             parts = line.split()
             if len(parts) >= 4:
-                device, mountpoint, fstype, options = parts[0], parts[1], parts[2], parts[3]
+                device, mountpoint, fstype, options = (
+                    parts[0],
+                    parts[1],
+                    parts[2],
+                    parts[3],
+                )
 
                 # Skip pseudo filesystems for basic info
                 if fstype in (
@@ -147,7 +152,14 @@ class FilesystemCollector(BaseCollector):
 
         # Get logical volumes
         stdout, _, rc = self.run_command(
-            ["lvs", "--noheadings", "--units", "b", "-o", "lv_name,vg_name,lv_size,lv_attr"]
+            [
+                "lvs",
+                "--noheadings",
+                "--units",
+                "b",
+                "-o",
+                "lv_name,vg_name,lv_size,lv_attr",
+            ]
         )
         if rc == 0 and stdout:
             for line in stdout.strip().split("\n"):
@@ -165,7 +177,14 @@ class FilesystemCollector(BaseCollector):
 
         # Get physical volumes
         stdout, _, rc = self.run_command(
-            ["pvs", "--noheadings", "--units", "b", "-o", "pv_name,vg_name,pv_size,pv_free"]
+            [
+                "pvs",
+                "--noheadings",
+                "--units",
+                "b",
+                "-o",
+                "pv_name,vg_name,pv_size,pv_free",
+            ]
         )
         if rc == 0 and stdout:
             for line in stdout.strip().split("\n"):
@@ -209,7 +228,9 @@ class FilesystemCollector(BaseCollector):
                     parts = line.split()
                     for i, part in enumerate(parts):
                         if part == "path":
-                            current_fs["devices"].append(parts[i + 1] if i + 1 < len(parts) else "")
+                            current_fs["devices"].append(
+                                parts[i + 1] if i + 1 < len(parts) else ""
+                            )
 
             if current_fs:
                 btrfs["filesystems"].append(current_fs)

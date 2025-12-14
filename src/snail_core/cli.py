@@ -117,7 +117,8 @@ def collect(
     console.print()
     console.print(
         Panel.fit(
-            f"[bold blue]Snail Core v{__version__}[/]\n" f"Collecting system information...",
+            f"[bold blue]Snail Core v{__version__}[/]\n"
+            f"Collecting system information...",
             border_style="blue",
         )
     )
@@ -140,7 +141,9 @@ def collect(
     # Handle upload
     if upload:
         if not config.upload_url:
-            console.print("[yellow]Warning: No upload URL configured. Skipping upload.[/]")
+            console.print(
+                "[yellow]Warning: No upload URL configured. Skipping upload.[/]"
+            )
         else:
             with Progress(
                 SpinnerColumn(),
@@ -148,7 +151,9 @@ def collect(
                 console=console,
                 transient=True,
             ) as progress:
-                task = progress.add_task(f"Uploading to {config.upload_url}...", total=None)
+                task = progress.add_task(
+                    f"Uploading to {config.upload_url}...", total=None
+                )
                 try:
                     response = core.upload(report)
                     progress.update(task, completed=True)
@@ -315,13 +320,13 @@ def init_config(ctx: click.Context, output_path: Path) -> None:
 upload:
   # URL to upload collected data to
   url: https://your-server.example.com/api/v1/ingest
-  
+
   # Enable/disable automatic upload
   enabled: true
-  
+
   # Request timeout in seconds
   timeout: 30
-  
+
   # Number of retry attempts
   retries: 3
 
@@ -329,7 +334,7 @@ upload:
 auth:
   # API key authentication
   api_key: null  # Set via SNAIL_API_KEY env var for security
-  
+
   # Mutual TLS (client certificate)
   cert_path: null  # /path/to/client.crt
   key_path: null   # /path/to/client.key
@@ -338,10 +343,10 @@ auth:
 collection:
   # Specific collectors to enable (empty = all)
   enabled_collectors: []
-  
+
   # Collectors to disable
   disabled_collectors: []
-  
+
   # Collection timeout in seconds
   timeout: 300
 
@@ -349,10 +354,10 @@ collection:
 output:
   # Directory for local report copies
   dir: /var/lib/snail-core
-  
+
   # Keep local copy after upload
   keep_local: false
-  
+
   # Compress output data
   compress: true
 
@@ -360,7 +365,7 @@ output:
 logging:
   # Log level: DEBUG, INFO, WARNING, ERROR
   level: INFO
-  
+
   # Log file path (null = stderr only)
   file: null
 
@@ -368,10 +373,10 @@ logging:
 privacy:
   # Anonymize hostnames in reports
   anonymize_hostnames: false
-  
+
   # Redact password-like values
   redact_passwords: true
-  
+
   # Paths to exclude from collection
   exclude_paths: []
 """

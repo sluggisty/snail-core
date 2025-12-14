@@ -138,7 +138,14 @@ class ServicesCollector(BaseCollector):
         failed = []
 
         stdout, _, rc = self.run_command(
-            ["systemctl", "list-units", "--state=failed", "--no-legend", "--plain", "--output=json"]
+            [
+                "systemctl",
+                "list-units",
+                "--state=failed",
+                "--no-legend",
+                "--plain",
+                "--output=json",
+            ]
         )
 
         if rc == 0 and stdout:
@@ -194,7 +201,14 @@ class ServicesCollector(BaseCollector):
 
         # Get active targets
         stdout, _, rc = self.run_command(
-            ["systemctl", "list-units", "--type=target", "--state=active", "--no-legend", "--plain"]
+            [
+                "systemctl",
+                "list-units",
+                "--type=target",
+                "--state=active",
+                "--no-legend",
+                "--plain",
+            ]
         )
 
         if rc == 0 and stdout:
@@ -235,7 +249,9 @@ class ServicesCollector(BaseCollector):
         """Get systemd socket units that are listening."""
         sockets = []
 
-        stdout, _, rc = self.run_command(["systemctl", "list-sockets", "--no-legend", "--plain"])
+        stdout, _, rc = self.run_command(
+            ["systemctl", "list-sockets", "--no-legend", "--plain"]
+        )
 
         if rc == 0 and stdout:
             for line in stdout.strip().split("\n"):

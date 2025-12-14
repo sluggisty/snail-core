@@ -236,8 +236,8 @@ pytest
 # Format code
 black src/
 
-# Lint
-ruff src/
+# Run pre-commit hooks
+pre-commit run --all-files
 ```
 
 ## License

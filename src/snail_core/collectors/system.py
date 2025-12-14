@@ -65,7 +65,9 @@ class SystemCollector(BaseCollector):
 
         # Get kernel modules count
         modules_output, _, _ = self.run_command(["lsmod"])
-        modules_count = len(modules_output.strip().split("\n")) - 1 if modules_output else 0
+        modules_count = (
+            len(modules_output.strip().split("\n")) - 1 if modules_output else 0
+        )
 
         return {
             "release": uname.release,
@@ -154,7 +156,9 @@ class SystemCollector(BaseCollector):
                     "name": u.name,
                     "terminal": u.terminal or "",
                     "host": u.host or "local",
-                    "started": datetime.fromtimestamp(u.started, tz=timezone.utc).isoformat(),
+                    "started": datetime.fromtimestamp(
+                        u.started, tz=timezone.utc
+                    ).isoformat(),
                 }
                 for u in users
             ],
