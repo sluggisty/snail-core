@@ -43,11 +43,11 @@ def setup_logging(level: str) -> None:
     help="Path to configuration file",
 )
 @click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Enable verbose output",
-)
+       "-V",
+       "--verbose",
+       is_flag=True,
+       help="Enable verbose output",
+   )
 @click.pass_context
 def main(ctx: click.Context, config: Path | None, verbose: bool) -> None:
     """
@@ -228,8 +228,8 @@ def list_available() -> None:
     console.print(table)
 
 
-@main.command("list-version")
-def list_version() -> None:
+@main.command("version", short_help="Display version information")
+def version() -> None:
     """Display version information for Snail Core."""
     console.print()
     console.print(
