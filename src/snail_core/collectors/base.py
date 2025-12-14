@@ -152,8 +152,6 @@ class BaseCollector(ABC):
             return {
                 "id": os_release.get("ID", "unknown"),
                 "version": os_release.get("VERSION_ID", ""),
-                "name": os_release.get(
-                    "PRETTY_NAME", os_release.get("NAME", "Unknown")
-                ),
+                "name": os_release.get("PRETTY_NAME", os_release.get("NAME", "Unknown")),
                 "like": os_release.get("ID_LIKE", ""),
             }

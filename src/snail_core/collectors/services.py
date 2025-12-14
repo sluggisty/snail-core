@@ -249,9 +249,7 @@ class ServicesCollector(BaseCollector):
         """Get systemd socket units that are listening."""
         sockets = []
 
-        stdout, _, rc = self.run_command(
-            ["systemctl", "list-sockets", "--no-legend", "--plain"]
-        )
+        stdout, _, rc = self.run_command(["systemctl", "list-sockets", "--no-legend", "--plain"])
 
         if rc == 0 and stdout:
             for line in stdout.strip().split("\n"):

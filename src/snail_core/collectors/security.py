@@ -20,10 +20,6 @@ class SecurityCollector(BaseCollector):
 
     def collect(self) -> dict[str, Any]:
         """Collect security information based on detected distribution."""
-        distro_info = self.detect_distro()
-        distro_id = distro_info.get("id", "").lower()
-        distro_like = distro_info.get("like", "").lower()
-
         result: dict[str, Any] = {
             "selinux": self._get_selinux_info(),
             "apparmor": self._get_apparmor_info(),
@@ -148,7 +144,7 @@ class SecurityCollector(BaseCollector):
             firewall["running"] = True
             # Count rules
             rules = [
-                l for l in stdout.strip().split("\n") if l and not l.startswith("Chain")
+                line for line in stdout.strip().split("\n") if line and not line.startswith("Chain")
             ]
             firewall["rules_count"] = len(rules)
 
@@ -246,12 +242,8 @@ class SecurityCollector(BaseCollector):
         for auth_file in ["/etc/pam.d/system-auth", "/etc/pam.d/common-auth"]:
             content = self.read_file(auth_file)
             if content:
-                pam["faillock_enabled"] = (
-                    pam["faillock_enabled"] or "pam_faillock" in content
-                )
-                pam["pwquality_enabled"] = (
-                    pam["pwquality_enabled"] or "pam_pwquality" in content
-                )
+                pam["faillock_enabled"] = pam["faillock_enabled"] or "pam_faillock" in content
+                pam["pwquality_enabled"] = pam["pwquality_enabled"] or "pam_pwquality" in content
 
         return pam
 

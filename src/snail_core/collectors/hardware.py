@@ -35,7 +35,7 @@ class HardwareCollector(BaseCollector):
 
     def _get_cpu_info(self) -> dict[str, Any]:
         """Get CPU information."""
-        cpu_info = {}
+        cpu_info: dict[str, Any] = {}
 
         # Parse /proc/cpuinfo
         cpuinfo_content = self.read_file("/proc/cpuinfo")
@@ -285,8 +285,9 @@ class HardwareCollector(BaseCollector):
     @staticmethod
     def _bytes_to_human(size: int) -> str:
         """Convert bytes to human readable string."""
+        size_float = float(size)
         for unit in ["B", "KB", "MB", "GB", "TB"]:
-            if abs(size) < 1024.0:
-                return f"{size:.1f} {unit}"
-            size /= 1024.0
-        return f"{size:.1f} PB"
+            if abs(size_float) < 1024.0:
+                return f"{size_float:.1f} {unit}"
+            size_float /= 1024.0
+        return f"{size_float:.1f} PB"
