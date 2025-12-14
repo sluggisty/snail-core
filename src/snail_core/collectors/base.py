@@ -15,41 +15,41 @@ logger = logging.getLogger(__name__)
 class BaseCollector(ABC):
     """
     Abstract base class for all data collectors.
-    
+
     Subclasses must implement the `collect` method to gather
     their specific data.
     """
-    
+
     name: str = "base"
     description: str = "Base collector"
-    
+
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
-    
+
     @abstractmethod
     def collect(self) -> dict[str, Any]:
         """
         Collect and return data.
-        
+
         Returns:
             Dictionary of collected data. Structure depends on collector type.
         """
         pass
-    
+
     def run_command(
-        self, 
-        cmd: list[str], 
+        self,
+        cmd: list[str],
         timeout: int = 30,
         check: bool = False,
     ) -> tuple[str, str, int]:
         """
         Run a shell command and return output.
-        
+
         Args:
             cmd: Command and arguments as list.
             timeout: Timeout in seconds.
             check: If True, raise on non-zero exit.
-        
+
         Returns:
             Tuple of (stdout, stderr, returncode).
         """
@@ -70,46 +70,46 @@ class BaseCollector(ABC):
             return "", f"Command not found: {cmd[0]}", -1
         except subprocess.CalledProcessError as e:
             return e.stdout or "", e.stderr or "", e.returncode
-    
+
     def read_file(self, path: str, default: str = "") -> str:
         """
         Read a file and return its contents.
-        
+
         Args:
             path: Path to the file.
             default: Default value if file cannot be read.
-        
+
         Returns:
             File contents or default value.
         """
         try:
             with open(path) as f:
                 return f.read()
-        except (OSError, IOError) as e:
+        except OSError as e:
             self.logger.debug(f"Could not read {path}: {e}")
             return default
-    
+
     def read_file_lines(self, path: str) -> list[str]:
         """Read a file and return lines as list."""
         content = self.read_file(path)
         if content:
             return content.strip().split("\n")
         return []
-    
+
     def parse_key_value_file(
-        self, 
-        path: str, 
+        self,
+        path: str,
         separator: str = "=",
         strip_quotes: bool = True,
     ) -> dict[str, str]:
         """
         Parse a key=value style file.
-        
+
         Args:
             path: Path to the file.
             separator: Key-value separator character.
             strip_quotes: Whether to strip surrounding quotes from values.
-        
+
         Returns:
             Dictionary of key-value pairs.
         """
@@ -123,21 +123,23 @@ class BaseCollector(ABC):
                 key = key.strip()
                 value = value.strip()
                 if strip_quotes and len(value) >= 2:
-                    if (value.startswith('"') and value.endswith('"')) or \
-                       (value.startswith("'") and value.endswith("'")):
+                    if (value.startswith('"') and value.endswith('"')) or (
+                        value.startswith("'") and value.endswith("'")
+                    ):
                         value = value[1:-1]
                 result[key] = value
         return result
-    
+
     def detect_distro(self) -> dict[str, str]:
         """
         Detect Linux distribution information.
-        
+
         Returns:
             Dictionary with 'id', 'version', 'name' keys.
         """
         try:
             import distro
+
             return {
                 "id": distro.id(),
                 "version": distro.version(),
@@ -153,4 +155,3 @@ class BaseCollector(ABC):
                 "name": os_release.get("PRETTY_NAME", os_release.get("NAME", "Unknown")),
                 "like": os_release.get("ID_LIKE", ""),
             }
-

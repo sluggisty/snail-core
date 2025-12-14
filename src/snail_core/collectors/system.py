@@ -20,10 +20,10 @@ from snail_core.collectors.base import BaseCollector
 
 class SystemCollector(BaseCollector):
     """Collects general system and OS information."""
-    
+
     name = "system"
     description = "Operating system and general system information"
-    
+
     def collect(self) -> dict[str, Any]:
         """Collect system information."""
         return {
@@ -37,11 +37,11 @@ class SystemCollector(BaseCollector):
             "timezone": self._get_timezone_info(),
             "virtualization": self._get_virtualization_info(),
         }
-    
+
     def _get_os_info(self) -> dict[str, Any]:
         """Get operating system information."""
         os_release = self.parse_key_value_file("/etc/os-release")
-        
+
         return {
             "name": distro.name(pretty=True),
             "id": distro.id(),
@@ -55,18 +55,18 @@ class SystemCollector(BaseCollector):
             "architecture": platform.machine(),
             "platform": platform.platform(),
         }
-    
+
     def _get_kernel_info(self) -> dict[str, Any]:
         """Get kernel information."""
         uname = platform.uname()
-        
+
         # Get kernel parameters
         cmdline = self.read_file("/proc/cmdline").strip()
-        
+
         # Get kernel modules count
         modules_output, _, _ = self.run_command(["lsmod"])
         modules_count = len(modules_output.strip().split("\n")) - 1 if modules_output else 0
-        
+
         return {
             "release": uname.release,
             "version": uname.version,
@@ -74,26 +74,27 @@ class SystemCollector(BaseCollector):
             "cmdline": cmdline,
             "modules_loaded": modules_count,
         }
-    
+
     def _get_hostname_info(self) -> dict[str, Any]:
         """Get hostname information."""
         hostname = socket.gethostname()
-        
+
         try:
             fqdn = socket.getfqdn()
         except Exception:
             fqdn = hostname
-        
+
         # Try to get hostnamectl info
         hostnamectl = {}
         stdout, _, rc = self.run_command(["hostnamectl", "status", "--json=short"])
         if rc == 0 and stdout:
             import json
+
             try:
                 hostnamectl = json.loads(stdout)
             except json.JSONDecodeError:
                 pass
-        
+
         return {
             "hostname": hostname,
             "fqdn": fqdn,
@@ -103,19 +104,19 @@ class SystemCollector(BaseCollector):
             "deployment": hostnamectl.get("Deployment", ""),
             "location": hostnamectl.get("Location", ""),
         }
-    
+
     def _get_uptime_info(self) -> dict[str, Any]:
         """Get system uptime information."""
         boot_time = psutil.boot_time()
         boot_datetime = datetime.fromtimestamp(boot_time, tz=timezone.utc)
         now = datetime.now(timezone.utc)
         uptime_seconds = (now - boot_datetime).total_seconds()
-        
+
         # Calculate human-readable uptime
         days = int(uptime_seconds // 86400)
         hours = int((uptime_seconds % 86400) // 3600)
         minutes = int((uptime_seconds % 3600) // 60)
-        
+
         return {
             "seconds": uptime_seconds,
             "days": days,
@@ -124,28 +125,28 @@ class SystemCollector(BaseCollector):
             "human_readable": f"{days}d {hours}h {minutes}m",
             "boot_time": boot_datetime.isoformat(),
         }
-    
+
     def _get_boot_info(self) -> dict[str, Any]:
         """Get boot-related information."""
         # Check if system uses UEFI or BIOS
         is_uefi = os.path.isdir("/sys/firmware/efi")
-        
+
         # Get secure boot status
         secure_boot = False
         if is_uefi:
             sb_content = self.read_file("/sys/firmware/efi/efivars/SecureBoot-*", "")
             if sb_content:
                 secure_boot = sb_content[-1:] == "\x01"
-        
+
         return {
             "firmware": "UEFI" if is_uefi else "BIOS",
             "secure_boot": secure_boot,
         }
-    
+
     def _get_users_info(self) -> dict[str, Any]:
         """Get current users information."""
         users = psutil.users()
-        
+
         return {
             "logged_in_count": len(users),
             "users": [
@@ -153,14 +154,12 @@ class SystemCollector(BaseCollector):
                     "name": u.name,
                     "terminal": u.terminal or "",
                     "host": u.host or "local",
-                    "started": datetime.fromtimestamp(
-                        u.started, tz=timezone.utc
-                    ).isoformat(),
+                    "started": datetime.fromtimestamp(u.started, tz=timezone.utc).isoformat(),
                 }
                 for u in users
             ],
         }
-    
+
     def _get_locale_info(self) -> dict[str, Any]:
         """Get locale settings."""
         locale_vars = {
@@ -169,13 +168,13 @@ class SystemCollector(BaseCollector):
             "LC_CTYPE": os.environ.get("LC_CTYPE", ""),
             "LC_MESSAGES": os.environ.get("LC_MESSAGES", ""),
         }
-        
+
         # Also check /etc/locale.conf
         locale_conf = self.parse_key_value_file("/etc/locale.conf")
         locale_vars.update({k: v for k, v in locale_conf.items() if k.startswith("L")})
-        
+
         return locale_vars
-    
+
     def _get_timezone_info(self) -> dict[str, Any]:
         """Get timezone information."""
         # Read /etc/localtime symlink target
@@ -186,36 +185,36 @@ class SystemCollector(BaseCollector):
                 tz_name = link.split("zoneinfo/")[-1]
         except OSError:
             pass
-        
+
         # Also check /etc/timezone if it exists
         if not tz_name:
             tz_name = self.read_file("/etc/timezone").strip()
-        
+
         return {
             "name": tz_name,
             "offset": datetime.now().astimezone().strftime("%z"),
         }
-    
+
     def _get_virtualization_info(self) -> dict[str, Any]:
         """Detect virtualization environment."""
         virt_type = "none"
         container = "none"
-        
+
         # Check systemd-detect-virt
         stdout, _, rc = self.run_command(["systemd-detect-virt"])
         if rc == 0 and stdout.strip() and stdout.strip() != "none":
             virt_type = stdout.strip()
-        
+
         # Check for container
         stdout, _, rc = self.run_command(["systemd-detect-virt", "--container"])
         if rc == 0 and stdout.strip() and stdout.strip() != "none":
             container = stdout.strip()
             virt_type = container
-        
+
         # Check specific virtualization indicators
         dmi_vendor = self.read_file("/sys/class/dmi/id/sys_vendor").strip().lower()
         product_name = self.read_file("/sys/class/dmi/id/product_name").strip().lower()
-        
+
         hypervisor = ""
         if "vmware" in dmi_vendor or "vmware" in product_name:
             hypervisor = "vmware"
@@ -227,11 +226,10 @@ class SystemCollector(BaseCollector):
             hypervisor = "hyperv"
         elif "xen" in dmi_vendor:
             hypervisor = "xen"
-        
+
         return {
             "type": virt_type,
             "container": container,
             "hypervisor": hypervisor,
             "is_virtual": virt_type != "none" or hypervisor != "",
         }
-

@@ -10,14 +10,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from snail_core.collectors.base import BaseCollector
-from snail_core.collectors.system import SystemCollector
+from snail_core.collectors.filesystem import FilesystemCollector
 from snail_core.collectors.hardware import HardwareCollector
+from snail_core.collectors.logs import LogsCollector
 from snail_core.collectors.network import NetworkCollector
 from snail_core.collectors.packages import PackagesCollector
-from snail_core.collectors.services import ServicesCollector
-from snail_core.collectors.filesystem import FilesystemCollector
 from snail_core.collectors.security import SecurityCollector
-from snail_core.collectors.logs import LogsCollector
+from snail_core.collectors.services import ServicesCollector
+from snail_core.collectors.system import SystemCollector
 
 if TYPE_CHECKING:
     pass
@@ -65,4 +65,3 @@ __all__ = [
     "list_collectors",
     "COLLECTORS",
 ]
-
