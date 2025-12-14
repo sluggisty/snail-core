@@ -13,7 +13,6 @@ from typing import Any
 
 import yaml
 
-
 DEFAULT_CONFIG_PATHS = [
     Path("/etc/snail-core/config.yaml"),
     Path.home() / ".config" / "snail-core" / "config.yaml",
@@ -25,58 +24,58 @@ DEFAULT_CONFIG_PATHS = [
 class Config:
     """
     Configuration container for Snail Core.
-    
+
     Priority (highest to lowest):
     1. Programmatic values passed to __init__
     2. Environment variables (prefixed with SNAIL_)
     3. Config file values
     4. Default values
     """
-    
+
     # Upload settings
     upload_url: str | None = None
     upload_enabled: bool = True
     upload_timeout: int = 30
     upload_retries: int = 3
-    
+
     # Authentication
     api_key: str | None = None
     auth_cert_path: str | None = None
     auth_key_path: str | None = None
-    
+
     # Collection settings
     enabled_collectors: list[str] = field(default_factory=list)
     disabled_collectors: list[str] = field(default_factory=list)
     collection_timeout: int = 300
-    
+
     # Output settings
     output_dir: str = "/var/lib/snail-core"
     keep_local_copy: bool = False
     compress_output: bool = True
-    
+
     # Logging
     log_level: str = "INFO"
     log_file: str | None = None
-    
+
     # Privacy
     anonymize_hostnames: bool = False
     redact_passwords: bool = True
     exclude_paths: list[str] = field(default_factory=list)
-    
+
     @classmethod
-    def from_file(cls, path: str | Path) -> "Config":
+    def from_file(cls, path: str | Path) -> Config:
         """Load configuration from a YAML file."""
         path = Path(path)
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {path}")
-        
+
         with open(path) as f:
             data = yaml.safe_load(f) or {}
-        
+
         return cls.from_dict(data)
-    
+
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Config":
+    def from_dict(cls, data: dict[str, Any]) -> Config:
         """Create config from a dictionary."""
         # Flatten nested structure if present
         flat = {}
@@ -86,27 +85,27 @@ class Config:
                     flat[subkey] = subvalue
             else:
                 flat[key] = value
-        
+
         # Filter to only known fields
         known_fields = {f.name for f in cls.__dataclass_fields__.values()}
         filtered = {k: v for k, v in flat.items() if k in known_fields}
-        
+
         return cls(**filtered)
-    
+
     @classmethod
-    def load(cls, config_path: str | Path | None = None) -> "Config":
+    def load(cls, config_path: str | Path | None = None) -> Config:
         """
         Load configuration with full resolution order.
-        
+
         Args:
             config_path: Explicit path to config file. If None, searches
                         default locations.
-        
+
         Returns:
             Fully resolved Config instance.
         """
         base_config = {}
-        
+
         # Find and load config file
         if config_path:
             path = Path(config_path)
@@ -119,15 +118,15 @@ class Config:
                     with open(path) as f:
                         base_config = yaml.safe_load(f) or {}
                     break
-        
+
         # Create config from file
         config = cls.from_dict(base_config) if base_config else cls()
-        
+
         # Override with environment variables
         config._apply_env_overrides()
-        
+
         return config
-    
+
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides."""
         env_mappings = {
@@ -141,7 +140,7 @@ class Config:
             "SNAIL_LOG_LEVEL": "log_level",
             "SNAIL_LOG_FILE": "log_file",
         }
-        
+
         for env_var, attr in env_mappings.items():
             value = os.environ.get(env_var)
             if value is not None:
@@ -152,7 +151,7 @@ class Config:
                 elif isinstance(current, int):
                     value = int(value)
                 setattr(self, attr, value)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""
         return {
@@ -187,12 +186,11 @@ class Config:
                 "exclude_paths": self.exclude_paths,
             },
         }
-    
+
     def save(self, path: str | Path) -> None:
         """Save configuration to a YAML file."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(path, "w") as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False, sort_keys=False)
-

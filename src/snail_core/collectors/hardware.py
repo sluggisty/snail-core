@@ -16,10 +16,10 @@ from snail_core.collectors.base import BaseCollector
 
 class HardwareCollector(BaseCollector):
     """Collects hardware information."""
-    
+
     name = "hardware"
     description = "CPU, memory, disk, and hardware information"
-    
+
     def collect(self) -> dict[str, Any]:
         """Collect hardware information."""
         return {
@@ -32,11 +32,11 @@ class HardwareCollector(BaseCollector):
             "usb": self._get_usb_devices(),
             "dmi": self._get_dmi_info(),
         }
-    
+
     def _get_cpu_info(self) -> dict[str, Any]:
         """Get CPU information."""
         cpu_info = {}
-        
+
         # Parse /proc/cpuinfo
         cpuinfo_content = self.read_file("/proc/cpuinfo")
         if cpuinfo_content:
@@ -55,11 +55,11 @@ class HardwareCollector(BaseCollector):
                         cpu_info["cache_size"] = value
                     elif key == "flags":
                         cpu_info["flags"] = value.split()
-        
+
         # Get CPU counts
         cpu_info["physical_cores"] = psutil.cpu_count(logical=False) or 0
         cpu_info["logical_cores"] = psutil.cpu_count(logical=True) or 0
-        
+
         # Get CPU frequency
         freq = psutil.cpu_freq()
         if freq:
@@ -68,14 +68,14 @@ class HardwareCollector(BaseCollector):
                 "min": freq.min,
                 "max": freq.max,
             }
-        
+
         # Get CPU times percentage
         cpu_percent = psutil.cpu_percent(interval=0.1, percpu=True)
         cpu_info["usage_percent"] = {
             "per_cpu": cpu_percent,
             "average": sum(cpu_percent) / len(cpu_percent) if cpu_percent else 0,
         }
-        
+
         # Get load average
         load = os.getloadavg()
         cpu_info["load_average"] = {
@@ -83,13 +83,13 @@ class HardwareCollector(BaseCollector):
             "5min": load[1],
             "15min": load[2],
         }
-        
+
         return cpu_info
-    
+
     def _get_memory_info(self) -> dict[str, Any]:
         """Get memory information."""
         mem = psutil.virtual_memory()
-        
+
         # Parse /proc/meminfo for additional details
         meminfo = {}
         for line in self.read_file_lines("/proc/meminfo"):
@@ -101,7 +101,7 @@ class HardwareCollector(BaseCollector):
                     meminfo[key] = int(value) * 1024  # Convert to bytes
                 except ValueError:
                     pass
-        
+
         return {
             "total": mem.total,
             "total_human": self._bytes_to_human(mem.total),
@@ -118,11 +118,11 @@ class HardwareCollector(BaseCollector):
             "hugepages_total": meminfo.get("HugePages_Total", 0),
             "hugepages_free": meminfo.get("HugePages_Free", 0),
         }
-    
+
     def _get_swap_info(self) -> dict[str, Any]:
         """Get swap information."""
         swap = psutil.swap_memory()
-        
+
         return {
             "total": swap.total,
             "total_human": self._bytes_to_human(swap.total),
@@ -132,34 +132,38 @@ class HardwareCollector(BaseCollector):
             "sin": swap.sin,
             "sout": swap.sout,
         }
-    
+
     def _get_disk_info(self) -> dict[str, Any]:
         """Get mounted disk information."""
         partitions = []
-        
+
         for part in psutil.disk_partitions(all=False):
             try:
                 usage = psutil.disk_usage(part.mountpoint)
-                partitions.append({
-                    "device": part.device,
-                    "mountpoint": part.mountpoint,
-                    "fstype": part.fstype,
-                    "opts": part.opts,
-                    "total": usage.total,
-                    "total_human": self._bytes_to_human(usage.total),
-                    "used": usage.used,
-                    "free": usage.free,
-                    "percent_used": usage.percent,
-                })
+                partitions.append(
+                    {
+                        "device": part.device,
+                        "mountpoint": part.mountpoint,
+                        "fstype": part.fstype,
+                        "opts": part.opts,
+                        "total": usage.total,
+                        "total_human": self._bytes_to_human(usage.total),
+                        "used": usage.used,
+                        "free": usage.free,
+                        "percent_used": usage.percent,
+                    }
+                )
             except (PermissionError, OSError):
-                partitions.append({
-                    "device": part.device,
-                    "mountpoint": part.mountpoint,
-                    "fstype": part.fstype,
-                    "opts": part.opts,
-                    "error": "Could not get usage stats",
-                })
-        
+                partitions.append(
+                    {
+                        "device": part.device,
+                        "mountpoint": part.mountpoint,
+                        "fstype": part.fstype,
+                        "opts": part.opts,
+                        "error": "Could not get usage stats",
+                    }
+                )
+
         # Get disk I/O counters
         io_counters = {}
         try:
@@ -176,54 +180,61 @@ class HardwareCollector(BaseCollector):
                     }
         except Exception:
             pass
-        
+
         return {
             "partitions": partitions,
             "io_counters": io_counters,
         }
-    
+
     def _get_block_devices(self) -> list[dict[str, Any]]:
         """Get block device information using lsblk."""
         devices = []
-        stdout, _, rc = self.run_command([
-            "lsblk", "-J", "-o", 
-            "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL,SERIAL,ROTA,RO"
-        ])
-        
+        stdout, _, rc = self.run_command(
+            [
+                "lsblk",
+                "-J",
+                "-o",
+                "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL,SERIAL,ROTA,RO",
+            ]
+        )
+
         if rc == 0 and stdout:
             import json
+
             try:
                 data = json.loads(stdout)
                 devices = data.get("blockdevices", [])
             except json.JSONDecodeError:
                 pass
-        
+
         return devices
-    
+
     def _get_pci_devices(self) -> list[dict[str, str]]:
         """Get PCI device information."""
         devices = []
         stdout, _, rc = self.run_command(["lspci", "-mm"])
-        
+
         if rc == 0 and stdout:
             for line in stdout.strip().split("\n"):
                 if line:
                     parts = line.split('"')
                     if len(parts) >= 7:
-                        devices.append({
-                            "slot": parts[0].strip(),
-                            "class": parts[1],
-                            "vendor": parts[3],
-                            "device": parts[5],
-                        })
-        
+                        devices.append(
+                            {
+                                "slot": parts[0].strip(),
+                                "class": parts[1],
+                                "vendor": parts[3],
+                                "device": parts[5],
+                            }
+                        )
+
         return devices[:50]  # Limit to first 50 devices
-    
+
     def _get_usb_devices(self) -> list[dict[str, str]]:
         """Get USB device information."""
         devices = []
         stdout, _, rc = self.run_command(["lsusb"])
-        
+
         if rc == 0 and stdout:
             for line in stdout.strip().split("\n"):
                 if line:
@@ -232,19 +243,21 @@ class HardwareCollector(BaseCollector):
                     if len(parts) >= 2:
                         bus_dev = parts[0]
                         rest = ":".join(parts[1:]).strip()
-                        
+
                         id_parts = rest.split(" ", 1)
                         device_id = id_parts[0] if id_parts else ""
                         description = id_parts[1] if len(id_parts) > 1 else ""
-                        
-                        devices.append({
-                            "bus_device": bus_dev,
-                            "id": device_id,
-                            "description": description,
-                        })
-        
+
+                        devices.append(
+                            {
+                                "bus_device": bus_dev,
+                                "id": device_id,
+                                "description": description,
+                            }
+                        )
+
         return devices
-    
+
     def _get_dmi_info(self) -> dict[str, str]:
         """Get DMI/SMBIOS information."""
         dmi_paths = {
@@ -260,15 +273,15 @@ class HardwareCollector(BaseCollector):
             "product_version": "/sys/class/dmi/id/product_version",
             "sys_vendor": "/sys/class/dmi/id/sys_vendor",
         }
-        
+
         dmi = {}
         for key, path in dmi_paths.items():
             value = self.read_file(path).strip()
             if value:
                 dmi[key] = value
-        
+
         return dmi
-    
+
     @staticmethod
     def _bytes_to_human(size: int) -> str:
         """Convert bytes to human readable string."""
@@ -277,4 +290,3 @@ class HardwareCollector(BaseCollector):
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} PB"
-

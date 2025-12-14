@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CollectionResult:
     """Result of a single collector run."""
-    
+
     collector_name: str
     success: bool
     data: dict[str, Any] = field(default_factory=dict)
@@ -33,14 +33,14 @@ class CollectionResult:
 @dataclass
 class CollectionReport:
     """Complete collection report from all collectors."""
-    
+
     hostname: str
     collection_id: str
     timestamp: str
     snail_version: str
     results: dict[str, Any] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert report to dictionary for serialization."""
         return {
@@ -53,7 +53,7 @@ class CollectionReport:
             "data": self.results,
             "errors": self.errors,
         }
-    
+
     def to_json(self, indent: int = 2) -> str:
         """Serialize report to JSON string."""
         return json.dumps(self.to_dict(), indent=indent, default=str)
@@ -62,98 +62,98 @@ class CollectionReport:
 class SnailCore:
     """
     Main orchestrator for system data collection.
-    
+
     Discovers and runs collectors, aggregates results, and handles upload.
     """
-    
+
     def __init__(self, config: Config | None = None):
         self.config = config or Config()
         self.collectors = get_all_collectors()
         self.uploader = Uploader(self.config) if self.config.upload_url else None
-    
+
     def collect(self, collector_names: list[str] | None = None) -> CollectionReport:
         """
         Run collection on specified or all collectors.
-        
+
         Args:
             collector_names: Optional list of specific collectors to run.
                            If None, runs all available collectors.
-        
+
         Returns:
             CollectionReport with all collected data.
         """
         import socket
         import time
         import uuid
-        
+
         from snail_core import __version__
-        
+
         report = CollectionReport(
             hostname=socket.gethostname(),
             collection_id=str(uuid.uuid4()),
             timestamp=datetime.now(timezone.utc).isoformat(),
             snail_version=__version__,
         )
-        
+
         # Filter collectors if specific names provided
         collectors_to_run = self.collectors
         if collector_names:
             collectors_to_run = {
-                name: cls for name, cls in self.collectors.items() 
+                name: cls
+                for name, cls in self.collectors.items()
                 if name in collector_names
             }
-        
+
         logger.info(f"Running {len(collectors_to_run)} collectors")
-        
+
         for name, collector_cls in collectors_to_run.items():
             start = time.perf_counter()
             try:
                 collector = collector_cls()
                 data = collector.collect()
                 duration = (time.perf_counter() - start) * 1000
-                
+
                 report.results[name] = data
                 logger.debug(f"Collector '{name}' completed in {duration:.2f}ms")
-                
+
             except Exception as e:
                 duration = (time.perf_counter() - start) * 1000
                 error_msg = f"Collector '{name}' failed: {e}"
                 report.errors.append(error_msg)
                 logger.error(error_msg)
-        
+
         return report
-    
+
     def upload(self, report: CollectionReport) -> dict[str, Any]:
         """
         Upload collection report to configured endpoint.
-        
+
         Args:
             report: The collection report to upload.
-        
+
         Returns:
             Response data from the server.
-        
+
         Raises:
             ValueError: If no upload URL is configured.
         """
         if not self.uploader:
             raise ValueError("No upload URL configured. Set 'upload_url' in config.")
-        
+
         return self.uploader.upload(report)
-    
+
     def collect_and_upload(
-        self, 
-        collector_names: list[str] | None = None
+        self, collector_names: list[str] | None = None
     ) -> tuple[CollectionReport, dict[str, Any] | None]:
         """
         Convenience method to collect and upload in one call.
-        
+
         Returns:
             Tuple of (report, upload_response). upload_response is None
             if upload is disabled or fails.
         """
         report = self.collect(collector_names)
-        
+
         upload_response = None
         if self.uploader and self.config.upload_enabled:
             try:
@@ -161,7 +161,7 @@ class SnailCore:
             except Exception as e:
                 logger.error(f"Upload failed: {e}")
                 report.errors.append(f"Upload failed: {e}")
-        
+
         return report, upload_response
 
 
@@ -172,21 +172,20 @@ def run_collection(
 ) -> CollectionReport:
     """
     Convenience function to run a collection.
-    
+
     Args:
         config: Optional configuration. Uses defaults if not provided.
         collector_names: Optional list of specific collectors to run.
         upload: Whether to upload results (if configured).
-    
+
     Returns:
         The collection report.
     """
     core = SnailCore(config)
-    
+
     if upload and core.uploader:
         report, _ = core.collect_and_upload(collector_names)
     else:
         report = core.collect(collector_names)
-    
-    return report
 
+    return report
