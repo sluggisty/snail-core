@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # Enable version updates for pip dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Allow both direct and indirect dependencies
+    allow:
+      - dependency-type: "all"
+    # Limit the number of open pull requests
+    open-pull-requests-limit: 5
+    # Add reviewers (optional - customize with your team)
+    # reviewers:
+    #   - "username"
+    # Add assignees (optional - customize with your team)
+    # assignees:
+    #   - "username"
+    # Add labels to pull requests
+    labels:
+      - "dependencies"
+      - "python"
+    # Commit message prefix
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Rebase strategy
+    rebase-strategy: "auto"
+    # Group dependencies (optional)
+    # groups:
+    #   dev-dependencies:
+    #     patterns:
+    #       - "pytest*"
+    #       - "black"
+    #       - "flake8"
+    #       - "mypy"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
