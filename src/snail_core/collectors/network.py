@@ -170,7 +170,7 @@ class NetworkCollector(BaseCollector):
 
     def _get_dns_config(self) -> dict[str, Any]:
         """Get DNS configuration."""
-        dns = {
+        dns: dict[str, Any] = {
             "nameservers": [],
             "search_domains": [],
             "options": [],
@@ -245,7 +245,7 @@ class NetworkCollector(BaseCollector):
 
     def _get_firewall_status(self) -> dict[str, Any]:
         """Get firewall status."""
-        firewall = {
+        firewall: dict[str, Any] = {
             "firewalld": {"installed": False, "running": False},
             "iptables": {"installed": False, "rules_count": 0},
             "nftables": {"installed": False, "tables_count": 0},
@@ -270,11 +270,9 @@ class NetworkCollector(BaseCollector):
             firewall["iptables"]["installed"] = True
             # Count non-empty, non-chain lines
             rules = [
-                l
-                for l in stdout.split("\n")
-                if l.strip()
-                and not l.startswith("Chain")
-                and not l.startswith("target")
+                line
+                for line in stdout.split("\n")
+                if line.strip() and not line.startswith("Chain") and not line.startswith("target")
             ]
             firewall["iptables"]["rules_count"] = len(rules)
 
@@ -282,7 +280,7 @@ class NetworkCollector(BaseCollector):
         stdout, _, rc = self.run_command(["nft", "list", "tables"])
         if rc == 0:
             firewall["nftables"]["installed"] = True
-            tables = [l for l in stdout.split("\n") if l.strip()]
+            tables = [line for line in stdout.split("\n") if line.strip()]
             firewall["nftables"]["tables_count"] = len(tables)
 
         return firewall

@@ -104,7 +104,7 @@ class Config:
         Returns:
             Fully resolved Config instance.
         """
-        base_config = {}
+        base_config: dict[str, Any] = {}
 
         # Find and load config file
         if config_path:
@@ -147,10 +147,11 @@ class Config:
                 # Type coercion
                 current = getattr(self, attr)
                 if isinstance(current, bool):
-                    value = value.lower() in ("true", "1", "yes")
+                    setattr(self, attr, value.lower() in ("true", "1", "yes"))
                 elif isinstance(current, int):
-                    value = int(value)
-                setattr(self, attr, value)
+                    setattr(self, attr, int(value))
+                else:
+                    setattr(self, attr, value)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""

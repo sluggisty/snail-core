@@ -43,11 +43,11 @@ def setup_logging(level: str) -> None:
     help="Path to configuration file",
 )
 @click.option(
-       "-V",
-       "--verbose",
-       is_flag=True,
-       help="Enable verbose output",
-   )
+    "-V",
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose output",
+)
 @click.pass_context
 def main(ctx: click.Context, config: Path | None, verbose: bool) -> None:
     """
@@ -117,8 +117,7 @@ def collect(
     console.print()
     console.print(
         Panel.fit(
-            f"[bold blue]Snail Core v{__version__}[/]\n"
-            f"Collecting system information...",
+            f"[bold blue]Snail Core v{__version__}[/]\nCollecting system information...",
             border_style="blue",
         )
     )
@@ -141,9 +140,7 @@ def collect(
     # Handle upload
     if upload:
         if not config.upload_url:
-            console.print(
-                "[yellow]Warning: No upload URL configured. Skipping upload.[/]"
-            )
+            console.print("[yellow]Warning: No upload URL configured. Skipping upload.[/]")
         else:
             with Progress(
                 SpinnerColumn(),
@@ -151,9 +148,7 @@ def collect(
                 console=console,
                 transient=True,
             ) as progress:
-                task = progress.add_task(
-                    f"Uploading to {config.upload_url}...", total=None
-                )
+                task = progress.add_task(f"Uploading to {config.upload_url}...", total=None)
                 try:
                     response = core.upload(report)
                     progress.update(task, completed=True)
@@ -234,7 +229,7 @@ def version() -> None:
     console.print()
     console.print(
         Panel.fit(
-            f"[bold blue]Snail Core[/]\n" f"Version: [cyan]{__version__}[/]",
+            f"[bold blue]Snail Core[/]\nVersion: [cyan]{__version__}[/]",
             border_style="blue",
             title="Version Information",
         )

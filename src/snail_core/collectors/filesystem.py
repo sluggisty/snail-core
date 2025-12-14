@@ -228,9 +228,7 @@ class FilesystemCollector(BaseCollector):
                     parts = line.split()
                     for i, part in enumerate(parts):
                         if part == "path":
-                            current_fs["devices"].append(
-                                parts[i + 1] if i + 1 < len(parts) else ""
-                            )
+                            current_fs["devices"].append(parts[i + 1] if i + 1 < len(parts) else "")
 
             if current_fs:
                 btrfs["filesystems"].append(current_fs)

@@ -136,18 +136,14 @@ class PackagesCollector(BaseCollector):
                     summary["by_arch"][arch] = summary["by_arch"].get(arch, 0) + 1
 
         stdout, _, rc = self.run_command(["rpm", "-qa", "gpg-pubkey*"])
-        summary["gpg_keys_count"] = (
-            len(stdout.strip().split("\n")) if rc == 0 and stdout else 0
-        )
+        summary["gpg_keys_count"] = len(stdout.strip().split("\n")) if rc == 0 and stdout else 0
 
         return summary
 
     def _get_dnf_repositories(self) -> list[dict[str, Any]]:
         """Get DNF repositories."""
         repos = []
-        stdout, _, rc = self.run_command(
-            ["dnf", "repolist", "--all", "-v", "--json"], timeout=60
-        )
+        stdout, _, rc = self.run_command(["dnf", "repolist", "--all", "-v", "--json"], timeout=60)
         if rc == 0 and stdout:
             try:
                 data = json.loads(stdout)
@@ -196,9 +192,7 @@ class PackagesCollector(BaseCollector):
     def _get_dnf_transactions(self) -> list[dict[str, Any]]:
         """Get recent DNF transactions."""
         transactions = []
-        stdout, _, rc = self.run_command(
-            ["dnf", "history", "list", "--json"], timeout=30
-        )
+        stdout, _, rc = self.run_command(["dnf", "history", "list", "--json"], timeout=30)
         if rc == 0 and stdout:
             try:
                 data = json.loads(stdout)
@@ -283,16 +277,10 @@ class PackagesCollector(BaseCollector):
         stdout, _, rc = self.run_command(["yum", "check-update"], timeout=120)
         if rc in (0, 100) and stdout:
             for line in stdout.strip().split("\n"):
-                if (
-                    line
-                    and not line.startswith("Loaded")
-                    and not line.startswith("Updated")
-                ):
+                if line and not line.startswith("Loaded") and not line.startswith("Updated"):
                     parts = line.split()
                     if len(parts) >= 2:
-                        result["packages"].append(
-                            {"name": parts[0], "version": parts[1]}
-                        )
+                        result["packages"].append({"name": parts[0], "version": parts[1]})
             result["count"] = len(result["packages"])
         return result
 
@@ -333,13 +321,11 @@ class PackagesCollector(BaseCollector):
     def _get_apt_config(self) -> dict[str, Any]:
         """Get APT configuration."""
         config: dict[str, Any] = {}
-        apt_config = self.parse_key_value_file("/etc/apt/apt.conf")
-        config["gpgcheck"] = True  # APT always checks GPG
+        # APT always checks GPG
+        config["gpgcheck"] = True
         stdout, _, rc = self.run_command(["apt", "--version"])
         if rc == 0 and stdout:
-            config["version"] = (
-                stdout.strip().split()[1] if " " in stdout else stdout.strip()
-            )
+            config["version"] = stdout.strip().split()[1] if " " in stdout else stdout.strip()
         return config
 
     def _get_apt_transactions(self) -> list[dict[str, Any]]:
@@ -392,7 +378,7 @@ class PackagesCollector(BaseCollector):
         stdout, _, rc = self.run_command(["rpm", "-qa", "--qf", "%{ARCH}\n"])
         if rc == 0 and stdout:
             summary["total_count"] = len(
-                [l for l in stdout.strip().split("\n") if l.strip()]
+                [line for line in stdout.strip().split("\n") if line.strip()]
             )
         return summary
 
@@ -401,7 +387,7 @@ class PackagesCollector(BaseCollector):
         repos = []
         stdout, _, rc = self.run_command(["zypper", "repos", "-d"])
         if rc == 0 and stdout:
-            current_repo = {}
+            current_repo: dict[str, Any] = {}
             for line in stdout.strip().split("\n"):
                 if line.startswith("#"):
                     if current_repo:

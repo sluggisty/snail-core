@@ -48,7 +48,7 @@ class LogsCollector(BaseCollector):
                     if part[-1] in "MGKB":
                         info["disk_usage"] = part
                     elif i > 0:
-                        info["disk_usage"] = f"{parts[i-1]}{part}"
+                        info["disk_usage"] = f"{parts[i - 1]}{part}"
                     break
                 elif "take" in parts and i > 0:
                     info["disk_usage"] = parts[i - 1]
@@ -57,7 +57,7 @@ class LogsCollector(BaseCollector):
         # Get number of boots
         stdout, _, rc = self.run_command(["journalctl", "--list-boots", "--no-pager"])
         if rc == 0 and stdout:
-            boots = [l for l in stdout.strip().split("\n") if l.strip()]
+            boots = [line for line in stdout.strip().split("\n") if line.strip()]
             info["boot_count"] = len(boots)
 
         # Get journald configuration
@@ -143,9 +143,7 @@ class LogsCollector(BaseCollector):
         }
 
         # Get auth failures from last 24 hours
-        since = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        since = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
 
         stdout, _, rc = self.run_command(
             [
@@ -190,7 +188,7 @@ class LogsCollector(BaseCollector):
         # Get failed login count from lastb if available
         stdout, _, rc = self.run_command(["lastb", "-n", "100"])
         if rc == 0 and stdout:
-            lines = [l for l in stdout.strip().split("\n") if l and "btmp" not in l]
+            lines = [line for line in stdout.strip().split("\n") if line and "btmp" not in line]
             result["failed_logins_lastb"] = len(lines)
 
         return result
