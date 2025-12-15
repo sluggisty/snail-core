@@ -1,5 +1,7 @@
 # 🐌 Snail Core
 
+![Snailcore Logo](snail-core.png)
+
 A system information collection and upload framework for Linux, inspired by [Red Hat's insights-core](https://github.com/RedHatInsights/insights-core).
 
 Snail Core provides an extensible framework for gathering system diagnostics and uploading them to a custom endpoint. It's designed to be modular, secure, and easy to integrate into your infrastructure.
