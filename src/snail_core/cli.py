@@ -386,6 +386,41 @@ privacy:
     console.print("  3. Run collection: [cyan]snail collect --upload[/]")
 
 
+@main.command("host-id")
+@click.option(
+    "--reset",
+    is_flag=True,
+    help="Reset the host ID (generates a new UUID)",
+)
+@click.pass_context
+def host_id(ctx: click.Context, reset: bool) -> None:
+    """
+    Display or reset the persistent host ID.
+
+    The host ID is a UUID that uniquely identifies this system across all
+    collections. It is stored persistently and reused for all uploads.
+    """
+    from snail_core.host_id import get_host_id, reset_host_id
+
+    config: Config = ctx.obj["config"]
+
+    if reset:
+        if not click.confirm(
+            "⚠️  Resetting the host ID will make this system appear as a new host "
+            "to the server. Continue?"
+        ):
+            console.print("[yellow]Cancelled[/]")
+            return
+
+        new_id = reset_host_id(config.output_dir)
+        console.print(f"[green]✓[/] Host ID reset to: [cyan]{new_id}[/]")
+        console.print("[dim]This system will now appear as a new host to the server.[/]")
+    else:
+        host_id_value = get_host_id(config.output_dir)
+        console.print(f"[bold]Host ID:[/] [cyan]{host_id_value}[/]")
+        console.print("[dim]This UUID uniquely identifies this system across all collections.[/]")
+
+
 @main.command("run")
 @click.option(
     "--collectors",

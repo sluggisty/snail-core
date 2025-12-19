@@ -122,6 +122,10 @@ snail status
 # Display version information
 snail list-version
 
+# View or reset persistent host ID
+snail host-id
+snail host-id --reset
+
 # Verbose mode
 snail -v collect
 ```
@@ -210,6 +214,7 @@ Authorization: Bearer <api-key>
 {
   "meta": {
     "hostname": "fedora-workstation",
+    "host_id": "057a8430-c818-4a43-8683-0ab05be16ef6",
     "collection_id": "uuid",
     "timestamp": "2024-01-15T10:30:00Z",
     "snail_version": "0.2.0"
