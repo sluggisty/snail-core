@@ -14,6 +14,7 @@ from typing import Any
 
 from snail_core.collectors import get_all_collectors
 from snail_core.config import Config
+from snail_core.host_id import get_host_id
 from snail_core.uploader import Uploader
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class CollectionReport:
     """Complete collection report from all collectors."""
 
     hostname: str
+    host_id: str
     collection_id: str
     timestamp: str
     snail_version: str
@@ -46,6 +48,7 @@ class CollectionReport:
         return {
             "meta": {
                 "hostname": self.hostname,
+                "host_id": self.host_id,
                 "collection_id": self.collection_id,
                 "timestamp": self.timestamp,
                 "snail_version": self.snail_version,
@@ -88,9 +91,16 @@ class SnailCore:
 
         from snail_core import __version__
 
+        # Get persistent host ID (or generate if first run)
+        host_id = get_host_id(self.config.output_dir)
+
+        # Generate a unique collection ID for this specific collection run
+        collection_id = str(uuid.uuid4())
+
         report = CollectionReport(
             hostname=socket.gethostname(),
-            collection_id=str(uuid.uuid4()),
+            host_id=host_id,
+            collection_id=collection_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
             snail_version=__version__,
         )
