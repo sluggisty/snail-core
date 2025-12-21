@@ -40,13 +40,24 @@ class SystemCollector(BaseCollector):
 
     def _get_os_info(self) -> dict[str, Any]:
         """Get operating system information."""
+
         os_release = self.parse_key_value_file("/etc/os-release")
+
+        distro_id = distro.id()
+        version_id = distro.version()
+        version_pretty = distro.version(pretty=True)
+
+        # Parse version into major, minor, and patch components based on distribution
+        version_parts = self._parse_version(distro_id, version_id, version_pretty)
 
         return {
             "name": distro.name(pretty=True),
-            "id": distro.id(),
-            "version": distro.version(pretty=True),
-            "version_id": distro.version(),
+            "id": distro_id,
+            "version": version_pretty,
+            "version_id": version_id,
+            "version_major": version_parts.get("major"),
+            "version_minor": version_parts.get("minor"),
+            "version_patch": version_parts.get("patch"),
             "codename": distro.codename(),
             "like": distro.like(),
             "variant": os_release.get("VARIANT", ""),
@@ -54,6 +65,56 @@ class SystemCollector(BaseCollector):
             "platform_id": os_release.get("PLATFORM_ID", ""),
             "architecture": platform.machine(),
             "platform": platform.platform(),
+        }
+
+    def _parse_version(
+        self, distro_id: str, version_id: str, version_pretty: str
+    ) -> dict[str, str | None]:
+        """
+        Parse version string into major, minor, and patch components.
+
+        Handles different versioning schemes:
+        - RHEL/CentOS: major.minor (e.g., 9.2, 8.5)
+        - Fedora: sequential number (e.g., 38, 39)
+        - Debian: major.minor (e.g., 11.7, 12.2)
+        - Ubuntu: year.month (e.g., 22.04, 23.10)
+        - openSUSE Leap: major.minor (e.g., 15.4, 15.5)
+        """
+        import re
+
+        if not version_id:
+            return {"major": None, "minor": None, "patch": None}
+
+        # Normalize version_id - remove any non-numeric prefixes/suffixes
+        version_clean = re.sub(r"[^\d.]", "", str(version_id))
+
+        # Split by dots
+        parts = version_clean.split(".")
+
+        major = parts[0] if len(parts) > 0 and parts[0] else None
+        minor = parts[1] if len(parts) > 1 and parts[1] else None
+        patch = parts[2] if len(parts) > 2 and parts[2] else None
+
+        # Special handling for Ubuntu (year.month format)
+        if distro_id in ("ubuntu", "ubuntu-core"):
+            # For Ubuntu, major is year, minor is month
+            # e.g., 22.04 -> major=22, minor=04
+            pass  # Already handled by split
+
+        # Special handling for Fedora (single number)
+        elif distro_id in ("fedora",):
+            # Fedora uses single number, treat as major
+            # e.g., 38 -> major=38, minor=None
+            minor = None
+            patch = None
+
+        # For distributions with major.minor format (RHEL, Debian, CentOS, openSUSE)
+        # Already handled by split
+
+        return {
+            "major": major,
+            "minor": minor,
+            "patch": patch,
         }
 
     def _get_kernel_info(self) -> dict[str, Any]:
