@@ -77,12 +77,18 @@ class SnailCore:
         # Try to ensure API key is available if upload URL is configured
         # Check both config.upload_url and SNAIL_UPLOAD_URL env var
         upload_url = self.config.upload_url or os.environ.get("SNAIL_UPLOAD_URL")
-        if upload_url and not self.config.api_key:
-            if not ensure_api_key(self.config, upload_url):
-                logger.warning(
-                    "Failed to obtain API key. Upload may fail. "
-                    "Set SNAIL_USERNAME and SNAIL_PASSWORD, or SNAIL_API_KEY directly."
-                )
+        if upload_url:
+            # Update config.upload_url if it came from env var
+            if not self.config.upload_url:
+                self.config.upload_url = upload_url
+            # Try to get API key if we don't have one
+            if not self.config.api_key:
+                if not ensure_api_key(self.config, upload_url):
+                    logger.warning(
+                        "Failed to obtain API key. Upload may fail. "
+                        "Set SNAIL_USERNAME and SNAIL_PASSWORD, or SNAIL_API_KEY directly."
+                    )
+        # Create uploader if we have upload URL
         self.uploader = Uploader(self.config) if self.config.upload_url else None
 
     def collect(self, collector_names: list[str] | None = None) -> CollectionReport:
