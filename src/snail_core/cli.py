@@ -18,6 +18,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from snail_core import __version__
+from snail_core.auth import ensure_api_key
 from snail_core.config import Config
 from snail_core.core import SnailCore
 
@@ -442,6 +443,15 @@ def run_and_upload(ctx: click.Context, collectors: tuple[str, ...]) -> None:
         console.print("[red]Error: No upload URL configured.[/]")
         console.print("Set SNAIL_UPLOAD_URL or configure in config file.")
         sys.exit(1)
+
+    # Try to ensure API key is available
+    if not config.api_key:
+        if ensure_api_key(config, config.upload_url):
+            console.print("[green]✓[/] API key obtained from server")
+        else:
+            console.print("[yellow]⚠[/] No API key configured and unable to obtain one")
+            console.print("[dim]  Set SNAIL_USERNAME and SNAIL_PASSWORD to auto-fetch API key[/]")
+            console.print("[dim]  Or set SNAIL_API_KEY directly[/]")
 
     # Invoke collect with upload flag
     ctx.invoke(
