@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -74,8 +75,14 @@ class SnailCore:
         self.config = config or Config()
         self.collectors = get_all_collectors()
         # Try to ensure API key is available if upload URL is configured
-        if self.config.upload_url and not self.config.api_key:
-            ensure_api_key(self.config, self.config.upload_url)
+        # Check both config.upload_url and SNAIL_UPLOAD_URL env var
+        upload_url = self.config.upload_url or os.environ.get("SNAIL_UPLOAD_URL")
+        if upload_url and not self.config.api_key:
+            if not ensure_api_key(self.config, upload_url):
+                logger.warning(
+                    "Failed to obtain API key. Upload may fail. "
+                    "Set SNAIL_USERNAME and SNAIL_PASSWORD, or SNAIL_API_KEY directly."
+                )
         self.uploader = Uploader(self.config) if self.config.upload_url else None
 
     def collect(self, collector_names: list[str] | None = None) -> CollectionReport:
@@ -168,6 +175,15 @@ class SnailCore:
 
         upload_response = None
         if self.uploader and self.config.upload_enabled:
+            # Double-check API key is available before upload
+            if not self.config.api_key:
+                upload_url = self.config.upload_url or os.environ.get("SNAIL_UPLOAD_URL")
+                if upload_url:
+                    if ensure_api_key(self.config, upload_url):
+                        # Recreate uploader with new API key
+                        self.uploader = Uploader(self.config)
+                    else:
+                        logger.error("No API key available and unable to obtain one")
             try:
                 upload_response = self.upload(report)
             except Exception as e:

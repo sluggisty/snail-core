@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
-from urllib.parse import urljoin
 
 import requests
 import yaml
@@ -43,11 +42,11 @@ def get_api_key_from_server(
     # Extract base URL from upload URL
     # e.g., http://localhost:8080/api/v1/ingest -> http://localhost:8080/api/v1
     if "/ingest" in upload_url:
-        base_url = upload_url.rsplit("/ingest", 1)[0]
+        base_url = upload_url.rsplit("/ingest", 1)[0].rstrip("/")
     else:
         # Fallback: remove last path component
         parts = upload_url.rstrip("/").rsplit("/", 1)
-        base_url = parts[0] if len(parts) > 1 else upload_url
+        base_url = parts[0] if len(parts) > 1 else upload_url.rstrip("/")
 
     # Ensure base_url ends with /api/v1
     if not base_url.endswith("/api/v1"):
@@ -55,9 +54,10 @@ def get_api_key_from_server(
             base_url = base_url + "/v1"
         elif "/api" not in base_url:
             # Assume we need to add /api/v1
-            base_url = base_url.rstrip("/") + "/api/v1"
+            base_url = base_url + "/api/v1"
 
-    api_key_endpoint = urljoin(base_url + "/", "auth/api-key")
+    # Construct API key endpoint
+    api_key_endpoint = f"{base_url}/auth/api-key"
 
     if not username or not password:
         return None
@@ -73,6 +73,9 @@ def get_api_key_from_server(
         api_key = data.get("key")
         if isinstance(api_key, str):
             return api_key
+        return None
+    except requests.exceptions.HTTPError:
+        # HTTP error occurred, return None
         return None
     except requests.exceptions.RequestException:
         return None
@@ -94,6 +97,7 @@ def ensure_api_key(config: "Config", upload_url: str | None = None) -> bool:
         return True
 
     # Need upload URL to determine server endpoint
+    # Check both provided upload_url and config.upload_url
     url = upload_url or config.upload_url
     if not url:
         return False
@@ -110,7 +114,7 @@ def ensure_api_key(config: "Config", upload_url: str | None = None) -> bool:
     if not api_key:
         return False
 
-    # Save API key to config file
+    # Save API key to config file and update config object
     config.api_key = api_key
     save_api_key_to_config(api_key)
 
