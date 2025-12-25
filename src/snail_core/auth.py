@@ -116,12 +116,6 @@ def ensure_api_key(config: "Config", upload_url: str | None = None) -> bool:
 
     # Save API key to config file and update config object
     config.api_key = api_key
-    if save_api_key_to_config(api_key):
-        logger.info("API key saved to config file")
-    else:
-        logger.warning(
-            "API key obtained but could not be saved to config file (will use from memory)"
-        )
     save_api_key_to_config(api_key)
 
     return True
