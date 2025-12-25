@@ -50,9 +50,9 @@ class Uploader:
         self.config = config
         self.session = requests.Session()
 
-        # Configure authentication
+        # Configure authentication - use X-API-Key header
         if config.api_key:
-            self.session.headers["Authorization"] = f"Bearer {config.api_key}"
+            self.session.headers["X-API-Key"] = config.api_key
 
         # Configure client certificate if provided
         if config.auth_cert_path and config.auth_key_path:
