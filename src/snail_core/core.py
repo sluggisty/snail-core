@@ -185,7 +185,9 @@ class SnailCore:
                         # Recreate uploader with new API key
                         self.uploader = Uploader(self.config)
                     else:
-                        logger.error("No API key available and unable to obtain one - upload will fail")
+                        logger.error(
+                            "No API key available and unable to obtain one - upload will fail"
+                        )
             elif self.uploader:
                 # Verify uploader has the API key
                 if not self.uploader.session.headers.get("X-API-Key"):
