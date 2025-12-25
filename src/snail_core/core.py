@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from snail_core.auth import ensure_api_key
 from snail_core.collectors import get_all_collectors
 from snail_core.config import Config
 from snail_core.host_id import get_host_id
@@ -72,6 +73,9 @@ class SnailCore:
     def __init__(self, config: Config | None = None):
         self.config = config or Config()
         self.collectors = get_all_collectors()
+        # Try to ensure API key is available if upload URL is configured
+        if self.config.upload_url and not self.config.api_key:
+            ensure_api_key(self.config, self.config.upload_url)
         self.uploader = Uploader(self.config) if self.config.upload_url else None
 
     def collect(self, collector_names: list[str] | None = None) -> CollectionReport:
