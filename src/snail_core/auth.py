@@ -6,12 +6,15 @@ Handles API key retrieval and configuration updates.
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import requests
 import yaml
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from snail_core.config import Config
@@ -60,9 +63,11 @@ def get_api_key_from_server(
     api_key_endpoint = f"{base_url}/auth/api-key"
 
     if not username or not password:
+        logger.debug("Missing username or password for API key retrieval")
         return None
 
     try:
+        logger.debug(f"Requesting API key from: {api_key_endpoint}")
         response = requests.post(
             api_key_endpoint,
             json={"username": username, "password": password},
@@ -72,12 +77,24 @@ def get_api_key_from_server(
         data = response.json()
         api_key = data.get("key")
         if isinstance(api_key, str):
+            logger.debug("Successfully obtained API key from server")
             return api_key
+        logger.warning("API key response missing 'key' field")
         return None
-    except requests.exceptions.HTTPError:
-        # HTTP error occurred, return None
+    except requests.exceptions.HTTPError as e:
+        # HTTP error occurred
+        if e.response is not None:
+            try:
+                error_data = e.response.json()
+                error_msg = error_data.get("error", "Unknown error")
+                logger.error(f"Failed to get API key: HTTP {e.response.status_code} - {error_msg}")
+            except Exception:
+                logger.error(f"Failed to get API key: HTTP {e.response.status_code}")
+        else:
+            logger.error(f"Failed to get API key: {e}")
         return None
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error while getting API key: {e}")
         return None
 
 
@@ -107,16 +124,22 @@ def ensure_api_key(config: "Config", upload_url: str | None = None) -> bool:
     password = os.environ.get("SNAIL_PASSWORD")
 
     if not username or not password:
+        logger.debug("SNAIL_USERNAME or SNAIL_PASSWORD not set, cannot auto-fetch API key")
         return False
 
+    logger.info(f"Attempting to obtain API key from server using username: {username}")
     # Request API key from server
     api_key = get_api_key_from_server(url, username, password)
     if not api_key:
+        logger.warning("Failed to obtain API key from server")
         return False
 
     # Save API key to config file and update config object
     config.api_key = api_key
-    save_api_key_to_config(api_key)
+    if save_api_key_to_config(api_key):
+        logger.info("API key saved to config file")
+    else:
+        logger.warning("API key obtained but could not be saved to config file (will use from memory)")
 
     return True
 
