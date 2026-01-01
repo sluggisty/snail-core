@@ -77,13 +77,40 @@ class Config:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Config:
         """Create config from a dictionary."""
+        # Mapping from nested dict structure to flat attribute names
+        # This is the reverse of to_dict() structure
+        nested_to_flat = {
+            ("upload", "url"): "upload_url",
+            ("upload", "enabled"): "upload_enabled",
+            ("upload", "timeout"): "upload_timeout",
+            ("upload", "retries"): "upload_retries",
+            ("auth", "api_key"): "api_key",
+            ("auth", "cert_path"): "auth_cert_path",
+            ("auth", "key_path"): "auth_key_path",
+            ("collection", "enabled_collectors"): "enabled_collectors",
+            ("collection", "disabled_collectors"): "disabled_collectors",
+            ("collection", "timeout"): "collection_timeout",
+            ("output", "dir"): "output_dir",
+            ("output", "keep_local"): "keep_local_copy",
+            ("output", "compress"): "compress_output",
+            ("logging", "level"): "log_level",
+            ("logging", "file"): "log_file",
+            ("privacy", "anonymize_hostnames"): "anonymize_hostnames",
+            ("privacy", "redact_passwords"): "redact_passwords",
+            ("privacy", "exclude_paths"): "exclude_paths",
+        }
+
         # Flatten nested structure if present
         flat = {}
         for key, value in data.items():
             if isinstance(value, dict):
+                # Handle nested structure
                 for subkey, subvalue in value.items():
-                    flat[subkey] = subvalue
+                    # Map nested key to flat attribute name
+                    flat_key = nested_to_flat.get((key, subkey), subkey)
+                    flat[flat_key] = subvalue
             else:
+                # Handle flat structure (already flat key)
                 flat[key] = value
 
         # Filter to only known fields
