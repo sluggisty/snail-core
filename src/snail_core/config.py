@@ -171,14 +171,18 @@ class Config:
         for env_var, attr in env_mappings.items():
             value = os.environ.get(env_var)
             if value is not None:
-                # Type coercion
-                current = getattr(self, attr)
-                if isinstance(current, bool):
-                    setattr(self, attr, value.lower() in ("true", "1", "yes"))
-                elif isinstance(current, int):
-                    setattr(self, attr, int(value))
-                else:
-                    setattr(self, attr, value)
+                try:
+                    # Type coercion with error handling
+                    current = getattr(self, attr)
+                    if isinstance(current, bool):
+                        setattr(self, attr, value.lower() in ("true", "1", "yes"))
+                    elif isinstance(current, int):
+                        setattr(self, attr, int(value))
+                    else:
+                        setattr(self, attr, value)
+                except (ValueError, AttributeError):
+                    # Skip invalid values, keep existing value
+                    pass
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary."""
