@@ -35,7 +35,7 @@ def setup_logging(level: str) -> None:
     )
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option(version=__version__, prog_name="snail-core")
 @click.option(
     "-c",
@@ -57,6 +57,11 @@ def main(ctx: click.Context, config: Path | None, verbose: bool) -> None:
     Collect system diagnostics and optionally upload to a remote server.
     """
     ctx.ensure_object(dict)
+
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit()
 
     # Load configuration
     if config:
