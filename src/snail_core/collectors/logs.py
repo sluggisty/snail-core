@@ -206,18 +206,19 @@ class LogsCollector(BaseCollector):
                 if line:
                     try:
                         entry = json.loads(line)
-                        unit = entry.get("_SYSTEMD_UNIT", "")
-                        if unit and unit.endswith(".service"):
-                            entries.append(
-                                {
-                                    "timestamp": self._format_journal_timestamp(
-                                        entry.get("__REALTIME_TIMESTAMP")
-                                    ),
-                                    "unit": unit,
-                                    "message": entry.get("MESSAGE", "")[:300],
-                                }
-                            )
-                    except json.JSONDecodeError:
+                        if entry is not None:  # Ensure entry is not None
+                            unit = entry.get("_SYSTEMD_UNIT", "")
+                            if unit and unit.endswith(".service"):
+                                entries.append(
+                                    {
+                                        "timestamp": self._format_journal_timestamp(
+                                            entry.get("__REALTIME_TIMESTAMP")
+                                        ),
+                                        "unit": unit,
+                                        "message": entry.get("MESSAGE", "")[:300],
+                                    }
+                                )
+                    except (json.JSONDecodeError, TypeError):
                         pass
 
         # Deduplicate by unit, keeping most recent
