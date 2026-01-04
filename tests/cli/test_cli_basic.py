@@ -83,8 +83,8 @@ class TestCliBasic(unittest.TestCase):
 
     def test_cli_config_flag_with_valid_path(self):
         """Test that --config with valid path works (creates temp file)."""
-        import tempfile
         import os
+        import tempfile
 
         # Create a temporary config file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:

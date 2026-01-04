@@ -9,9 +9,9 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from snail_core.collectors.base import BaseCollector
 import pytest
 
+from snail_core.collectors.base import BaseCollector
 from snail_core.config import Config
 from snail_core.core import SnailCore
 

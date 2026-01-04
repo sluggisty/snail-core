@@ -10,8 +10,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from snail_core.collectors.base import BaseCollector
 import pytest
+
+from snail_core.collectors.base import BaseCollector
 
 
 @pytest.mark.integration

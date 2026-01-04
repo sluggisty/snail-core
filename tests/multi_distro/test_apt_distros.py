@@ -9,8 +9,9 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from snail_core.collectors.packages import PackagesCollector
 import pytest
+
+from snail_core.collectors.packages import PackagesCollector
 
 
 @pytest.mark.integration

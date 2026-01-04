@@ -12,10 +12,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 import yaml
 
 from snail_core.config import Config
-import pytest
 
 
 @pytest.mark.integration

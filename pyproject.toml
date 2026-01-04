@@ -70,6 +70,13 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["snail_core"]
+multi_line_output = 3
+include_trailing_comma = true
+
 [tool.pytest.ini_options]
 # Test discovery and execution
 testpaths = ["tests"]

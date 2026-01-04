@@ -16,7 +16,7 @@ import requests
 
 from snail_core.config import Config
 from snail_core.core import CollectionReport
-from snail_core.uploader import UploadResult, Uploader
+from snail_core.uploader import Uploader, UploadResult
 
 
 class TestUploadResult(unittest.TestCase):

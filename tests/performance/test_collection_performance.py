@@ -7,13 +7,13 @@ Tests that collections complete within reasonable time limits and don't consume 
 from __future__ import annotations
 
 import gc
-import psutil
 import tempfile
 import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import psutil
 import pytest
 
 from snail_core.config import Config

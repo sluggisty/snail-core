@@ -142,8 +142,8 @@ class TestUploadIntegration(unittest.TestCase):
                 self.assertIn("snail-core/", headers["User-Agent"])
 
                 # Verify payload structure
-                import json
                 import gzip
+                import json
 
                 data = request["data"]
 

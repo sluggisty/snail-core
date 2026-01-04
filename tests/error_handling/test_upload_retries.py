@@ -9,9 +9,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
-import requests
-
 import pytest
+import requests
 
 from snail_core.config import Config
 from snail_core.uploader import Uploader, UploadResult

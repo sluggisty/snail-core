@@ -11,9 +11,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from click.testing import CliRunner
-
 import pytest
+from click.testing import CliRunner
 
 from snail_core.cli import main
 from snail_core.config import Config
