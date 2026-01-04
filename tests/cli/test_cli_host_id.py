@@ -6,13 +6,14 @@ Tests host ID display and reset functionality.
 
 from __future__ import annotations
 
-import sys
 import unittest
 import uuid
 from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
+
+# Ensure modules are imported
 
 
 @pytest.mark.cli
@@ -22,13 +23,9 @@ class TestCliHostId(unittest.TestCase):
     def setUp(self):
         """Set up test runner."""
         self.runner = CliRunner()
-        # Completely fresh import to avoid any module state issues
-        if "snail_core.cli" in sys.modules:
-            del sys.modules["snail_core.cli"]
-        if "snail_core" in sys.modules:
-            del sys.modules["snail_core"]
-        # Fresh import
+        # Import CLI module and ensure submodules are loaded
         import snail_core.cli
+        import snail_core.host_id
 
         self.main = snail_core.cli.main
 
@@ -36,7 +33,7 @@ class TestCliHostId(unittest.TestCase):
         """Test that host-id command displays current host ID."""
         test_host_id = str(uuid.uuid4())
 
-        with patch("snail_core.host_id.get_host_id", return_value=test_host_id):
+        with patch("snail_core.cli.get_host_id", return_value=test_host_id):
             result = self.runner.invoke(self.main, ["host-id"])
 
             self.assertEqual(result.exit_code, 0)
@@ -48,7 +45,7 @@ class TestCliHostId(unittest.TestCase):
         """Test host-id --reset command when user confirms."""
         new_host_id = str(uuid.uuid4())
 
-        with patch("snail_core.host_id.reset_host_id", return_value=new_host_id) as mock_reset:
+        with patch("snail_core.cli.reset_host_id", return_value=new_host_id) as mock_reset:
             result = self.runner.invoke(self.main, ["host-id", "--reset"], input="y\n")
 
             self.assertEqual(result.exit_code, 0)
@@ -59,7 +56,7 @@ class TestCliHostId(unittest.TestCase):
 
     def test_host_id_command_reset_cancelled(self):
         """Test host-id --reset command when user cancels."""
-        with patch("snail_core.host_id.reset_host_id") as mock_reset:
+        with patch("snail_core.cli.reset_host_id") as mock_reset:
             result = self.runner.invoke(self.main, ["host-id", "--reset"], input="n\n")
 
             self.assertEqual(result.exit_code, 0)
@@ -68,7 +65,7 @@ class TestCliHostId(unittest.TestCase):
 
     def test_host_id_command_returns_valid_uuid(self):
         """Test that displayed host ID is a valid UUID."""
-        with patch("snail_core.host_id.get_host_id") as mock_get:
+        with patch("snail_core.cli.get_host_id") as mock_get:
             test_uuid = str(uuid.uuid4())
             mock_get.return_value = test_uuid
 
@@ -85,7 +82,7 @@ class TestCliHostId(unittest.TestCase):
         """Test that host-id command calls get_host_id with correct config directory."""
         test_host_id = str(uuid.uuid4())
 
-        with patch("snail_core.host_id.get_host_id", return_value=test_host_id) as mock_get:
+        with patch("snail_core.cli.get_host_id", return_value=test_host_id) as mock_get:
             result = self.runner.invoke(self.main, ["host-id"])
 
             self.assertEqual(result.exit_code, 0)
@@ -98,7 +95,7 @@ class TestCliHostId(unittest.TestCase):
         """Test that host-id --reset calls reset_host_id with correct config directory."""
         new_host_id = str(uuid.uuid4())
 
-        with patch("snail_core.host_id.reset_host_id", return_value=new_host_id) as mock_reset:
+        with patch("snail_core.cli.reset_host_id", return_value=new_host_id) as mock_reset:
             result = self.runner.invoke(self.main, ["host-id", "--reset"], input="y\n")
 
             self.assertEqual(result.exit_code, 0)

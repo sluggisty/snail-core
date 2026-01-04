@@ -54,7 +54,19 @@ class TestLargeDatasets(unittest.TestCase):
             + packages
         )
 
-        with patch.object(collector, "run_command") as mock_run:
+        with (
+            patch.object(collector, "run_command") as mock_run,
+            patch.object(
+                collector,
+                "detect_distro",
+                return_value={
+                    "id": "fedora",
+                    "version": "39",
+                    "name": "Fedora Linux",
+                    "like": "rhel",
+                },
+            ),
+        ):
             # Mock all the commands that packages collector uses
             call_count = 0
 
@@ -69,6 +81,13 @@ class TestLargeDatasets(unittest.TestCase):
                         "",
                         0,
                     )
+                elif "rpm" in cmd and "-qa" in cmd and "--qf" in cmd and "%{ARCH}" in " ".join(cmd):
+                    # Return architecture list (one per package)
+                    arch_output = "\n".join(["x86_64"] * 1000)
+                    return (arch_output, "", 0)
+                elif "rpm" in cmd and "-qa" in cmd and "gpg-pubkey" in " ".join(cmd):
+                    # Return GPG keys
+                    return ("gpg-pubkey-12345678-12345678\ngpg-pubkey-87654321-87654321", "", 0)
                 elif "rpm" in cmd and "-qa" in cmd:
                     return (large_package_output, "", 0)
                 else:
@@ -81,9 +100,8 @@ class TestLargeDatasets(unittest.TestCase):
             # Should handle large dataset
             self.assertIn("summary", result)
             self.assertIn("total_count", result["summary"])
-            # Should handle approximately 1000 packages (allow some tolerance for parsing)
-            self.assertGreater(result["summary"]["total_count"], 900)
-            self.assertLess(result["summary"]["total_count"], 1100)
+            # Should handle exactly 1000 packages (one architecture per package)
+            self.assertEqual(result["summary"]["total_count"], 1000)
 
             # Should not have excessive memory usage (check completed without error)
             self.assertIsInstance(result, dict)

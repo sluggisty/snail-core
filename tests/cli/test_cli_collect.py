@@ -7,13 +7,14 @@ Tests collection execution, output formats, and collector selection.
 from __future__ import annotations
 
 import json
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
+
+# Ensure snail_core modules are imported
 
 
 @pytest.mark.cli
@@ -23,20 +24,19 @@ class TestCliCollect(unittest.TestCase):
     def setUp(self):
         """Set up test runner."""
         self.runner = CliRunner()
-        # Completely fresh import to avoid any module state issues
-        if "snail_core.cli" in sys.modules:
-            del sys.modules["snail_core.cli"]
-        if "snail_core" in sys.modules:
-            del sys.modules["snail_core"]
-        # Fresh import
+        # Import CLI module and ensure submodules are loaded
         import snail_core.cli
+        import snail_core.config
+        import snail_core.core
 
         self.main = snail_core.cli.main
 
     def test_collect_command_runs_successfully(self):
         """Test that collect command runs without errors."""
         # Mock the actual collection to avoid running real collectors
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
@@ -57,7 +57,10 @@ class TestCliCollect(unittest.TestCase):
 
     def test_collect_command_with_specific_collectors(self):
         """Test collect command with specific collector selection."""
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
@@ -77,7 +80,10 @@ class TestCliCollect(unittest.TestCase):
 
     def test_collect_command_json_output(self):
         """Test collect command with JSON output format."""
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
@@ -116,7 +122,10 @@ class TestCliCollect(unittest.TestCase):
 
     def test_collect_command_pretty_output(self):
         """Test collect command with pretty (default) output format."""
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
@@ -138,7 +147,10 @@ class TestCliCollect(unittest.TestCase):
 
     def test_collect_command_output_to_file(self):
         """Test collect command writing output to file."""
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
@@ -170,7 +182,10 @@ class TestCliCollect(unittest.TestCase):
 
     def test_collect_command_with_upload_flag_no_url(self):
         """Test collect command with upload flag but no upload URL configured."""
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
@@ -198,7 +213,10 @@ class TestCliCollect(unittest.TestCase):
 
     def test_collect_command_multiple_collectors(self):
         """Test collect command with multiple collector options."""
-        with patch("snail_core.core.SnailCore.collect") as mock_collect:
+
+        from snail_core.core import SnailCore
+
+        with patch.object(SnailCore, "collect") as mock_collect:
             from snail_core.core import CollectionReport
 
             mock_report = CollectionReport(
