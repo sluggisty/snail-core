@@ -6,7 +6,6 @@ Tests help, version, and basic command structure.
 
 from __future__ import annotations
 
-import importlib
 import sys
 import unittest
 from unittest.mock import patch
@@ -16,8 +15,6 @@ from click.testing import CliRunner
 
 
 @pytest.mark.cli
-
-
 class TestCliBasic(unittest.TestCase):
     """Test basic CLI functionality."""
 
@@ -25,12 +22,13 @@ class TestCliBasic(unittest.TestCase):
         """Set up test runner."""
         self.runner = CliRunner()
         # Completely fresh import to avoid any module state issues
-        if 'snail_core.cli' in sys.modules:
-            del sys.modules['snail_core.cli']
-        if 'snail_core' in sys.modules:
-            del sys.modules['snail_core']
+        if "snail_core.cli" in sys.modules:
+            del sys.modules["snail_core.cli"]
+        if "snail_core" in sys.modules:
+            del sys.modules["snail_core"]
         # Fresh import
         import snail_core.cli
+
         self.main = snail_core.cli.main
 
     def test_cli_help(self):
@@ -89,11 +87,13 @@ class TestCliBasic(unittest.TestCase):
         import os
 
         # Create a temporary config file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(
+                """
 upload:
   url: https://test.example.com/api
-""")
+"""
+            )
             temp_config_path = f.name
 
         try:
@@ -115,7 +115,16 @@ upload:
         self.assertIn("Available Collectors", result.output)
 
         # Should show collector names
-        collector_names = ["system", "hardware", "network", "packages", "services", "filesystem", "security", "logs"]
+        collector_names = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in collector_names:
             self.assertIn(name, result.output)
 
@@ -148,6 +157,7 @@ upload:
 
             # Check that file was created with content
             import os
+
             self.assertTrue(os.path.exists("sample-config.yaml"))
 
             with open("sample-config.yaml", "r") as f:
@@ -164,8 +174,8 @@ upload:
         self.assertIn("Host ID:", result.output)
 
         # Should be a valid UUID
-        import re
-        uuid_pattern = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+
+        uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
         self.assertRegex(result.output, uuid_pattern)
 
     @patch("click.confirm")

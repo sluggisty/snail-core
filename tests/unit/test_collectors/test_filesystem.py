@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from snail_core.collectors.filesystem import FilesystemCollector
 
@@ -68,4 +67,3 @@ class TestFilesystemCollector:
         with patch.object(collector, "run_command", return_value=(mock_output, "", 0)):
             result = collector._get_lvm_info()
             assert "volume_groups" in result
-

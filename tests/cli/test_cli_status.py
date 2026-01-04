@@ -15,8 +15,6 @@ from click.testing import CliRunner
 
 
 @pytest.mark.cli
-
-
 class TestCliStatus(unittest.TestCase):
     """Test the 'snail status' command."""
 
@@ -24,12 +22,13 @@ class TestCliStatus(unittest.TestCase):
         """Set up test runner."""
         self.runner = CliRunner()
         # Completely fresh import to avoid any module state issues
-        if 'snail_core.cli' in sys.modules:
-            del sys.modules['snail_core.cli']
-        if 'snail_core' in sys.modules:
-            del sys.modules['snail_core']
+        if "snail_core.cli" in sys.modules:
+            del sys.modules["snail_core.cli"]
+        if "snail_core" in sys.modules:
+            del sys.modules["snail_core"]
         # Fresh import
         import snail_core.cli
+
         self.main = snail_core.cli.main
 
     def test_status_command_shows_configuration(self):
@@ -48,13 +47,14 @@ class TestCliStatus(unittest.TestCase):
 
     def test_status_command_with_upload_url_tests_connection(self):
         """Test that status command tests connection when upload URL is configured."""
-        with patch('snail_core.config.Config.load') as mock_config_load:
+        with patch("snail_core.config.Config.load") as mock_config_load:
             # Mock config with upload URL
             from snail_core.config import Config
+
             mock_config = Config(upload_url="https://test.example.com/api")
             mock_config_load.return_value = mock_config
 
-            with patch('snail_core.uploader.Uploader.test_connection', return_value=True):
+            with patch("snail_core.uploader.Uploader.test_connection", return_value=True):
                 result = self.runner.invoke(self.main, ["status"])
 
                 self.assertEqual(result.exit_code, 0)
@@ -62,13 +62,14 @@ class TestCliStatus(unittest.TestCase):
 
     def test_status_command_connection_failure(self):
         """Test status command when connection test fails."""
-        with patch('snail_core.config.Config.load') as mock_config_load:
+        with patch("snail_core.config.Config.load") as mock_config_load:
             # Mock config with upload URL
             from snail_core.config import Config
+
             mock_config = Config(upload_url="https://test.example.com/api")
             mock_config_load.return_value = mock_config
 
-            with patch('snail_core.uploader.Uploader.test_connection', return_value=False):
+            with patch("snail_core.uploader.Uploader.test_connection", return_value=False):
                 result = self.runner.invoke(self.main, ["status"])
 
                 self.assertEqual(result.exit_code, 0)
@@ -104,7 +105,7 @@ class TestCliStatus(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
         # Should contain table-like formatting
-        lines = result.output.split('\n')
+        lines = result.output.split("\n")
         self.assertTrue(len(lines) > 10)  # Should have multiple lines
 
         # Should have the title

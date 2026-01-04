@@ -8,27 +8,20 @@ from __future__ import annotations
 
 import gc
 import psutil
-import sys
 import tempfile
 import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from snail_core.config import Config
-import pytest
-
-
-@pytest.mark.performance
-@pytest.mark.slow
 from snail_core.core import SnailCore
-import pytest
 
 
 @pytest.mark.performance
 @pytest.mark.slow
-
-
 class TestCollectionPerformance(unittest.TestCase):
     """Test collection performance metrics."""
 
@@ -49,7 +42,7 @@ class TestCollectionPerformance(unittest.TestCase):
                 file_path.unlink()
         self.temp_dir.rmdir()
 
-    def _get_memory_usage(self) -> float:
+    def _get_memory_usage(self):
         """Get current memory usage in MB."""
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024  # Convert to MB
@@ -71,12 +64,18 @@ class TestCollectionPerformance(unittest.TestCase):
         execution_time, results = self._measure_collection_time()
 
         # Should complete within 5 minutes (300 seconds)
-        self.assertLess(execution_time, 300,
-                       f"Full collection took {execution_time:.2f}s, exceeded 5-minute limit")
+        self.assertLess(
+            execution_time,
+            300,
+            f"Full collection took {execution_time:.2f}s, exceeded 5-minute limit",
+        )
 
         # Should complete within 2 minutes for normal operation
-        self.assertLess(execution_time, 120,
-                       f"Full collection took {execution_time:.2f}s, should be under 2 minutes")
+        self.assertLess(
+            execution_time,
+            120,
+            f"Full collection took {execution_time:.2f}s, should be under 2 minutes",
+        )
 
         # Should collect from multiple collectors
         self.assertGreater(len(results), 3, "Should collect from at least 4 collectors")
@@ -99,30 +98,30 @@ class TestCollectionPerformance(unittest.TestCase):
 
                 execution_time = end_time - start_time
                 timing_results[collector_name] = {
-                    'time': execution_time,
-                    'success': collector_name in report.results,
-                    'error': len(report.errors) > 0
+                    "time": execution_time,
+                    "success": collector_name in report.results,
+                    "error": len(report.errors) > 0,
                 }
 
                 # Individual collectors should complete within 30 seconds
-                self.assertLess(execution_time, 30,
-                               f"Collector {collector_name} took {execution_time:.2f}s, exceeded 30s limit")
+                self.assertLess(
+                    execution_time,
+                    30,
+                    f"Collector {collector_name} took {execution_time:.2f}s, exceeded 30s limit",
+                )
 
             except Exception as e:
-                timing_results[collector_name] = {
-                    'time': 0,
-                    'success': False,
-                    'error': str(e)
-                }
+                timing_results[collector_name] = {"time": 0, "success": False, "error": str(e)}
 
         # At least some collectors should succeed
-        successful_collectors = [name for name, result in timing_results.items() if result['success']]
+        successful_collectors = [
+            name for name, result in timing_results.items() if result["success"]
+        ]
         self.assertGreater(len(successful_collectors), 0, "At least one collector should succeed")
 
         # Log timing results for analysis
         print(f"\nCollector timing results ({len(collectors)} total):")
         for name, result in timing_results.items():
-            status = "✓" if result['success'] else "✗"
             print(".2f")
 
     def test_memory_usage_during_collection(self):
@@ -140,12 +139,10 @@ class TestCollectionPerformance(unittest.TestCase):
             memory_delta = final_memory - initial_memory
 
             # Memory increase should be reasonable (less than 100MB)
-            self.assertLess(memory_delta, 100,
-                           ".1f")
+            self.assertLess(memory_delta, 100, ".1f")
 
             # Should not leak excessive memory
-            self.assertLessEqual(final_memory, initial_memory + 50,
-                                ".1f")
+            self.assertLessEqual(final_memory, initial_memory + 50, ".1f")
 
         finally:
             # Clean up
@@ -163,15 +160,18 @@ class TestCollectionPerformance(unittest.TestCase):
         core = SnailCore(short_timeout_config)
 
         start_time = time.perf_counter()
-        report = core.collect()
+        core.collect()
         end_time = time.perf_counter()
 
         execution_time = end_time - start_time
 
         # Should respect timeout (though individual collectors might still complete)
         # The timeout applies to subprocess calls, not the overall collection
-        self.assertLess(execution_time, 60,  # Should not take more than 1 minute even with short timeout
-                       f"Collection with short timeout took {execution_time:.2f}s")
+        self.assertLess(
+            execution_time,
+            60,  # Should not take more than 1 minute even with short timeout
+            f"Collection with short timeout took {execution_time:.2f}s",
+        )
 
     def test_collection_scalability_with_multiple_runs(self):
         """Test that multiple collection runs don't degrade performance."""
@@ -189,8 +189,7 @@ class TestCollectionPerformance(unittest.TestCase):
             times.append(execution_time)
 
             # Each run should complete
-            self.assertGreater(len(report.results), 0,
-                             f"Run {i+1} produced no results")
+            self.assertGreater(len(report.results), 0, f"Run {i+1} produced no results")
 
         # Performance should not degrade significantly
         avg_time = sum(times) / len(times)
@@ -198,19 +197,20 @@ class TestCollectionPerformance(unittest.TestCase):
         min_time = min(times)
 
         # Maximum time should not be more than 3x the minimum
-        degradation_ratio = max_time / min_time if min_time > 0 else float('inf')
-        self.assertLess(degradation_ratio, 3.0,
-                       f"Performance degraded {degradation_ratio:.2f}x between runs")
+        degradation_ratio = max_time / min_time if min_time > 0 else float("inf")
+        self.assertLess(
+            degradation_ratio, 3.0, f"Performance degraded {degradation_ratio:.2f}x between runs"
+        )
 
-        print(f"\nMultiple run timing: min={min_time:.2f}s, avg={avg_time:.2f}s, max={max_time:.2f}s")
+        print(
+            f"\nMultiple run timing: min={min_time:.2f}s, avg={avg_time:.2f}s, max={max_time:.2f}s"
+        )
 
     def test_collector_isolation_performance(self):
         """Test that slow collectors don't affect others."""
         core = SnailCore(self.config)
 
         # Mock one collector to be slow
-        original_collectors = core.collectors.copy()
-
         class SlowCollector:
             name = "slow_test"
             description = "Slow test collector"
@@ -227,19 +227,23 @@ class TestCollectionPerformance(unittest.TestCase):
                 return {"fast_data": "test"}
 
         # Replace collectors with our test ones
-        with patch.object(core, 'collectors', {
-            'slow_test': SlowCollector,
-            'fast_test': FastCollector,
-        }):
+        with patch.object(
+            core,
+            "collectors",
+            {
+                "slow_test": SlowCollector,
+                "fast_test": FastCollector,
+            },
+        ):
             start_time = time.perf_counter()
-            report = core.collect(['slow_test', 'fast_test'])
+            report = core.collect(["slow_test", "fast_test"])
             end_time = time.perf_counter()
 
             execution_time = end_time - start_time
 
             # Should complete both collectors
-            self.assertIn('slow_test', report.results)
-            self.assertIn('fast_test', report.results)
+            self.assertIn("slow_test", report.results)
+            self.assertIn("fast_test", report.results)
 
             # Should take at least the slow collector time but not much more
             self.assertGreater(execution_time, 0.05, "Should take some time")
@@ -251,8 +255,8 @@ class TestCollectionPerformance(unittest.TestCase):
 
         # Test with different collector subsets
         test_scenarios = [
-            (['system'], "single collector"),
-            (['system', 'hardware'], "two collectors"),
+            (["system"], "single collector"),
+            (["system", "hardware"], "two collectors"),
             (None, "all collectors"),  # None means all
         ]
 
@@ -269,8 +273,11 @@ class TestCollectionPerformance(unittest.TestCase):
             # Should produce results
             num_results = len(report.results)
             expected_min = 1 if collector_list else 3
-            self.assertGreaterEqual(num_results, expected_min,
-                                  f"{scenario_name} should produce at least {expected_min} results")
+            self.assertGreaterEqual(
+                num_results,
+                expected_min,
+                f"{scenario_name} should produce at least {expected_min} results",
+            )
 
             print(f"{scenario_name}: {execution_time:.2f}s, {num_results} results")
 
@@ -287,14 +294,16 @@ class TestCollectionPerformance(unittest.TestCase):
 
             # Check that we don't leak threads
             final_threads = threading.active_count()
-            self.assertLessEqual(final_threads, initial_threads + 2,  # Allow some tolerance
-                               f"Thread leak: {initial_threads} -> {final_threads}")
+            self.assertLessEqual(
+                final_threads,
+                initial_threads + 2,  # Allow some tolerance
+                f"Thread leak: {initial_threads} -> {final_threads}",
+            )
 
             # Check memory is reasonable
             final_memory = self._get_memory_usage()
             memory_delta = final_memory - initial_memory
-            self.assertLess(memory_delta, 50,  # Less than 50MB increase
-                           ".1f")
+            self.assertLess(memory_delta, 50, ".1f")  # Less than 50MB increase
 
         finally:
             # Force cleanup
@@ -309,8 +318,7 @@ class TestCollectionPerformance(unittest.TestCase):
         execution_time, results = self._measure_collection_time()
 
         # Should still complete within reasonable time even under load
-        self.assertLess(execution_time, 180,  # 3 minutes
-                       ".2f")
+        self.assertLess(execution_time, 180, ".2f")  # 3 minutes
 
         # Should still produce results
         self.assertGreater(len(results), 0, "Should produce results under load")

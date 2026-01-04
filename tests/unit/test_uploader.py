@@ -9,7 +9,7 @@ from __future__ import annotations
 import gzip
 import json
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import requests
@@ -154,7 +154,7 @@ class TestUploaderUpload(unittest.TestCase):
 
         with patch.object(uploader.session, "post") as mock_post:
             mock_post.return_value = mock_response
-            result = uploader.upload(report)
+            uploader.upload(report)
 
             # Verify post was called with compressed data
             call_args = mock_post.call_args
@@ -189,7 +189,7 @@ class TestUploaderUpload(unittest.TestCase):
 
         with patch.object(uploader.session, "post") as mock_post:
             mock_post.return_value = mock_response
-            result = uploader.upload(report)
+            uploader.upload(report)
 
             # Verify post was called with uncompressed JSON string
             call_args = mock_post.call_args
@@ -218,7 +218,7 @@ class TestUploaderUpload(unittest.TestCase):
 
         with patch.object(uploader.session, "post") as mock_post:
             mock_post.return_value = mock_response
-            result = uploader.upload(report, endpoint="https://custom.com/upload")
+            uploader.upload(report, endpoint="https://custom.com/upload")
 
             # Verify the custom endpoint was used
             call_args = mock_post.call_args
@@ -416,7 +416,9 @@ class TestUploaderRetryLogic(unittest.TestCase):
 
     def test_exponential_backoff(self):
         """Test that exponential backoff is implemented."""
-        config = Config(upload_url="https://test.com/api", upload_retries=3)  # Need 3 attempts to succeed on 3rd
+        config = Config(
+            upload_url="https://test.com/api", upload_retries=3
+        )  # Need 3 attempts to succeed on 3rd
         uploader = Uploader(config)
         report = self.create_test_report()
 

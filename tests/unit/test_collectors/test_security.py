@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
 
 from snail_core.collectors.security import SecurityCollector
 
@@ -32,7 +31,9 @@ class TestSecurityCollector:
 
         with patch.object(collector, "read_file", return_value="1"):
             with patch.object(collector, "run_command", return_value=("Enforcing", "", 0)):
-                with patch.object(collector, "parse_key_value_file", return_value={"SELINUX": "enforcing"}):
+                with patch.object(
+                    collector, "parse_key_value_file", return_value={"SELINUX": "enforcing"}
+                ):
                     result = collector._get_selinux_info()
 
                     assert result["available"] is True
@@ -70,10 +71,14 @@ class TestSecurityCollector:
         """Test firewall detection for ufw."""
         collector = SecurityCollector()
 
-        with patch.object(collector, "run_command", side_effect=[
-            ("inactive", "", 1),  # firewalld check fails
-            ("Status: active", "", 0),  # ufw status
-        ]):
+        with patch.object(
+            collector,
+            "run_command",
+            side_effect=[
+                ("inactive", "", 1),  # firewalld check fails
+                ("Status: active", "", 0),  # ufw status
+            ],
+        ):
             result = collector._get_firewall_status()
             assert result["type"] == "ufw"
 
@@ -91,4 +96,3 @@ class TestSecurityCollector:
                 result = collector._get_sshd_config()
                 assert result["port"] == "22"
                 assert result["permit_root_login"] == "no"
-

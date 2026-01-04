@@ -6,19 +6,15 @@ Tests that collectors handle file read errors gracefully.
 
 from __future__ import annotations
 
-import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from snail_core.collectors.base import BaseCollector
 import pytest
 
 
 @pytest.mark.integration
-
-
 class FileErrorCollector(BaseCollector):
     """Test collector that exercises file reading functionality."""
 
@@ -58,7 +54,7 @@ class FileErrorCollector(BaseCollector):
         result["kv_parse_missing"] = kv_data
 
         # Test 8: Parse malformed key-value file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.conf') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".conf") as f:
             f.write("INVALID LINE WITHOUT EQUALS\nKEY1=value1\n=incomplete\nKEY2=value2\n")
             temp_file = f.name
 
@@ -110,7 +106,7 @@ class TestFileErrors(unittest.TestCase):
         """Test that parse_key_value_file handles malformed content."""
         collector = FileErrorCollector()
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.conf') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".conf") as f:
             f.write("INVALID LINE\nKEY1=value1\n=incomplete key\nKEY2=value2\n")
             temp_file = f.name
 
@@ -129,8 +125,8 @@ class TestFileErrors(unittest.TestCase):
         """Test that parse_key_value_file handles quoted values."""
         collector = FileErrorCollector()
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.conf') as f:
-            f.write('KEY1="quoted value"\nKEY2=\'single quoted\'\nKEY3=unquoted\n')
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".conf") as f:
+            f.write("KEY1=\"quoted value\"\nKEY2='single quoted'\nKEY3=unquoted\n")
             temp_file = f.name
 
         try:
@@ -146,12 +142,12 @@ class TestFileErrors(unittest.TestCase):
         """Test that parse_key_value_file works with custom separators."""
         collector = FileErrorCollector()
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.conf') as f:
-            f.write('KEY1: value1\nKEY2 :value2\nKEY3:value3\n')
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".conf") as f:
+            f.write("KEY1: value1\nKEY2 :value2\nKEY3:value3\n")
             temp_file = f.name
 
         try:
-            data = collector.parse_key_value_file(temp_file, separator=':')
+            data = collector.parse_key_value_file(temp_file, separator=":")
 
             self.assertEqual(data["KEY1"], "value1")
             self.assertEqual(data["KEY2"], "value2")
@@ -176,7 +172,7 @@ class TestFileErrors(unittest.TestCase):
         """Test handling of empty files."""
         collector = FileErrorCollector()
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             # Create empty file
             temp_file = f.name
 
@@ -196,7 +192,7 @@ class TestFileErrors(unittest.TestCase):
         """Test that successful file reads preserve content."""
         collector = FileErrorCollector()
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             test_content = "line 1\nline 2\nline 3"
             f.write(test_content)
             temp_file = f.name
@@ -214,8 +210,8 @@ class TestFileErrors(unittest.TestCase):
         """Test handling of binary files (should not crash)."""
         collector = FileErrorCollector()
 
-        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as f:
-            f.write(b'\x00\x01\x02\x03binary data\x04\x05')
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
+            f.write(b"\x00\x01\x02\x03binary data\x04\x05")
             temp_file = f.name
 
         try:

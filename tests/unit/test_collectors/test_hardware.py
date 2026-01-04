@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-import psutil
 
 from snail_core.collectors.hardware import HardwareCollector
 
@@ -36,7 +34,9 @@ class TestHardwareCollector:
         mock_psutil.cpu_freq.return_value = MagicMock(current=2400.0, min=800.0, max=2400.0)
         mock_psutil.cpu_percent.return_value = [10.0, 20.0, 30.0, 40.0]
 
-        with patch.object(collector, "read_file", return_value="model_name\t: Test CPU\nvendor_id\t: GenuineIntel"):
+        with patch.object(
+            collector, "read_file", return_value="model_name\t: Test CPU\nvendor_id\t: GenuineIntel"
+        ):
             result = collector._get_cpu_info()
 
             assert "physical_cores" in result
@@ -55,7 +55,11 @@ class TestHardwareCollector:
         mock_mem.percent = 50.0
         mock_psutil.virtual_memory.return_value = mock_mem
 
-        with patch.object(collector, "read_file_lines", return_value=["MemTotal:       8192 kB", "MemFree:        4096 kB"]):
+        with patch.object(
+            collector,
+            "read_file_lines",
+            return_value=["MemTotal:       8192 kB", "MemFree:        4096 kB"],
+        ):
             result = collector._get_memory_info()
 
             assert "total" in result
@@ -65,8 +69,6 @@ class TestHardwareCollector:
 
     def test_bytes_to_human(self):
         """Test bytes to human readable conversion."""
-        collector = HardwareCollector()
-
         assert HardwareCollector._bytes_to_human(1024) == "1.0 KB"
         assert HardwareCollector._bytes_to_human(1024 * 1024) == "1.0 MB"
         assert HardwareCollector._bytes_to_human(1024 * 1024 * 1024) == "1.0 GB"
@@ -92,4 +94,3 @@ class TestHardwareCollector:
         result = collector._get_disk_info()
         assert "partitions" in result
         assert len(result["partitions"]) > 0
-

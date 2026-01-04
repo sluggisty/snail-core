@@ -6,7 +6,6 @@ Tests PackagesCollector on SUSE, openSUSE, and other Zypper-based systems.
 
 from __future__ import annotations
 
-import sys
 import unittest
 from unittest.mock import patch
 
@@ -15,8 +14,6 @@ import pytest
 
 
 @pytest.mark.integration
-
-
 class TestZypperDistros(unittest.TestCase):
     """Test PackagesCollector on Zypper-based distributions."""
 
@@ -26,9 +23,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_suse_detection_uses_zypper(self):
         """Test that SUSE detection results in Zypper package manager."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "sles"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "sles"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -39,9 +37,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_opensuse_detection_uses_zypper(self):
         """Test that openSUSE detection results in Zypper package manager."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "opensuse-leap"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "opensuse-leap"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -50,9 +49,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_zypper_repository_listing(self):
         """Test Zypper repository listing functionality."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "opensuse"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "opensuse"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -69,9 +69,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_zypper_package_listing(self):
         """Test Zypper package listing and summary."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "sles"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "sles"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -82,9 +83,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_zypper_upgradeable_packages(self):
         """Test Zypper upgradeable packages detection."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "opensuse-leap"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "opensuse-leap"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -94,9 +96,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_zypper_config_parsing(self):
         """Test Zypper configuration parsing."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "sles"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "sles"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -106,9 +109,10 @@ class TestZypperDistros(unittest.TestCase):
 
     def test_zypper_transaction_history(self):
         """Test Zypper transaction history parsing."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "opensuse"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "opensuse"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_zypper_commands()
 
             result = self.collector.collect()
@@ -130,16 +134,36 @@ class TestZypperDistros(unittest.TestCase):
 
             if cmd[0] == "zypper":
                 if "repos" in cmd or "lr" in cmd:
-                    return ("# repo-oss\nURI: http://download.opensuse.org/distribution/leap/15.4/repo/oss/\nName: Main Repository\nEnabled: Yes\n# repo-update\nURI: http://download.opensuse.org/update/leap/15.4/oss/\nName: Main Update Repository\nEnabled: Yes\n", "", 0)
+                    return (
+                        "# repo-oss\nURI: http://download.opensuse.org/distribution/leap/15.4/repo/oss/\nName: Main Repository\nEnabled: Yes\n# repo-update\nURI: http://download.opensuse.org/update/leap/15.4/oss/\nName: Main Update Repository\nEnabled: Yes\n",
+                        "",
+                        0,
+                    )
                 elif "packages" in cmd or "pa" in cmd:
-                    return ("S | Name           | Type    | Version     | Arch   | Repository\ni | kernel-default | package | 5.14.21-150400.24.11 | x86_64 | repo-update\ni | bash           | package | 5.1.16-6.1          | x86_64 | repo-oss\n", "", 0)
+                    return (
+                        "S | Name           | Type    | Version     | Arch   | Repository\ni | kernel-default | package | 5.14.21-150400.24.11 | x86_64 | repo-update\ni | bash           | package | 5.1.16-6.1          | x86_64 | repo-oss\n",
+                        "",
+                        0,
+                    )
                 elif "list-updates" in cmd or "lu" in cmd:
-                    return ("Loading repository data...\nReading installed packages...\n\nNo updates found.\n", "", 0)
+                    return (
+                        "Loading repository data...\nReading installed packages...\n\nNo updates found.\n",
+                        "",
+                        0,
+                    )
                 elif "history" in cmd:
-                    return ("ID | Date       | Action | Login | Name\n1  | 2024-01-01 | install | root  | vim\n", "", 0)
+                    return (
+                        "ID | Date       | Action | Login | Name\n1  | 2024-01-01 | install | root  | vim\n",
+                        "",
+                        0,
+                    )
             elif cmd[0] == "rpm":
                 if "-qa" in cmd:
-                    return ("kernel-default-5.14.21-150400.24.11.x86_64\nbash-5.1.16-6.1.x86_64\n", "", 0)
+                    return (
+                        "kernel-default-5.14.21-150400.24.11.x86_64\nbash-5.1.16-6.1.x86_64\n",
+                        "",
+                        0,
+                    )
 
             return ("", "", 1)  # Command not found
 
