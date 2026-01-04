@@ -90,9 +90,12 @@ class TestFullWorkflow(unittest.TestCase):
             # Verify the HTTP call was made correctly
             mock_post.assert_called_once()
             call_args = mock_post.call_args
-            url, data, headers = call_args[0][0], call_args[0][1], call_args[1]['headers']
 
-            self.assertEqual(url, "https://test.example.com/api/upload")
+            # Check that the URL was called
+            self.assertEqual(call_args[0][0], "https://test.example.com/api/upload")
+
+            # Check that headers were passed
+            headers = call_args[1]['headers']
             self.assertIn("Content-Encoding", headers)
             self.assertEqual(headers["Content-Encoding"], "gzip")
 
@@ -237,14 +240,14 @@ class TestFullWorkflow(unittest.TestCase):
 
             # Verify compression was applied
             call_args = mock_post.call_args
-            sent_data = call_args[0][1]  # data parameter
             sent_headers = call_args[1]['headers']
 
             # Should be compressed
             self.assertIn("Content-Encoding", sent_headers)
             self.assertEqual(sent_headers["Content-Encoding"], "gzip")
 
-            # Should be able to decompress
+            # Should be able to decompress the sent data
+            sent_data = call_args[1]['data']  # data is in kwargs
             decompressed = gzip.decompress(sent_data).decode("utf-8")
             parsed_data = json.loads(decompressed)
             self.assertEqual(parsed_data["data"], test_data)
@@ -282,13 +285,12 @@ class TestFullWorkflow(unittest.TestCase):
 
     def test_workflow_with_collection_failure(self):
         """Test workflow when collection partially fails."""
-        core = SnailCore(self.config)
-
-        # Mock collectors where one succeeds and one fails
+        # Mock collectors before SnailCore initialization
         with patch('snail_core.core.get_all_collectors', return_value={
-            'success_collector': lambda: MockCollector("success", {"data": "good"}),
-            'failing_collector': lambda: FailingCollector()
+            'success_collector': SuccessCollector,
+            'failing_collector': FailingCollector
         }):
+            core = SnailCore(self.config)
             report, upload_response = core.collect_and_upload()
 
             # Should have partial results
@@ -345,18 +347,28 @@ class TestFullWorkflow(unittest.TestCase):
 class MockCollector:
     """Mock collector for testing."""
 
-    def __init__(self, name: str, data: dict):
-        self.name = name
-        self.data = data
+    def __init__(self):
+        self.name = "mock_collector"
 
     def collect(self):
-        return self.data
+        return {"mock": "data"}
+
+
+class SuccessCollector:
+    """Mock collector that succeeds."""
+
+    def __init__(self):
+        self.name = "success_collector"
+
+    def collect(self):
+        return {"data": "good"}
 
 
 class FailingCollector:
     """Mock collector that always fails."""
 
-    name = "failing"
+    def __init__(self):
+        self.name = "failing"
 
     def collect(self):
         raise Exception("Mock collector failure")
