@@ -14,8 +14,23 @@ from pathlib import Path
 from unittest.mock import patch
 
 from snail_core.collectors.packages import PackagesCollector
+import pytest
+
+
+@pytest.mark.performance
+@pytest.mark.slow
 from snail_core.collectors.services import ServicesCollector
+import pytest
+
+
+@pytest.mark.performance
+@pytest.mark.slow
 from snail_core.collectors.filesystem import FilesystemCollector
+import pytest
+
+
+@pytest.mark.performance
+@pytest.mark.slow
 
 
 class TestLargeDatasets(unittest.TestCase):
@@ -290,6 +305,11 @@ class TestLargeDatasets(unittest.TestCase):
     def test_large_configuration_handling(self):
         """Test handling of large configuration datasets."""
         from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.performance
+@pytest.mark.slow
 
         # Create a config with many enabled collectors
         large_config = {

@@ -1,0 +1,25 @@
+# Testing dependencies for Snail Core
+# Install with: pip install -r requirements-test.txt
+
+# Core testing framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+
+# Test utilities
+responses>=0.23.0
+freezegun>=1.2.0
+
+# Development tools (also used for testing)
+black>=23.0.0
+pre-commit>=3.0.0
+mypy>=1.0.0
+
+# Type stubs for better type checking
+types-PyYAML>=6.0.0
+types-requests>=2.28.0
+
+# Additional pytest plugins for enhanced testing
+pytest-xdist>=3.0.0  # For parallel test execution
+pytest-html>=3.1.0   # For HTML test reports
+pytest-benchmark>=4.0.0  # For performance benchmarking

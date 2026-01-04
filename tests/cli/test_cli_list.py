@@ -9,9 +9,13 @@ from __future__ import annotations
 import sys
 import unittest
 
+import pytest
 from click.testing import CliRunner
 
 from snail_core.collectors import COLLECTORS
+
+
+@pytest.mark.cli
 
 
 class TestCliList(unittest.TestCase):

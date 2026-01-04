@@ -10,7 +10,12 @@ import sys
 import unittest
 from unittest.mock import patch
 
+import pytest
+
 from snail_core.collectors.security import SecurityCollector
+
+
+@pytest.mark.integration
 
 
 class TestApparmor(unittest.TestCase):

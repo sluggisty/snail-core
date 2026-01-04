@@ -16,7 +16,15 @@ from unittest.mock import MagicMock, patch
 from click.testing import CliRunner
 
 from snail_core.cli import main
+import pytest
+
+
+@pytest.mark.e2e
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.e2e
 
 
 class TestCliWorkflow(unittest.TestCase):

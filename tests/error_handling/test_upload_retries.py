@@ -14,7 +14,15 @@ from unittest.mock import MagicMock, patch
 import requests
 
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.integration
 from snail_core.uploader import Uploader, UploadResult
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TestUploadRetries(unittest.TestCase):
@@ -281,6 +289,10 @@ class TestUploadRetries(unittest.TestCase):
         with patch.object(self.uploader.session, 'post', return_value=mock_response):
             # Create a test report for upload
             from snail_core.core import CollectionReport
+import pytest
+
+
+@pytest.mark.integration
             test_report = CollectionReport(
                 hostname="test",
                 host_id="test-id",

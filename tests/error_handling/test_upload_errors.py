@@ -13,8 +13,20 @@ from unittest.mock import MagicMock, patch
 import requests
 
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.integration
 from snail_core.core import CollectionReport, SnailCore
+import pytest
+
+
+@pytest.mark.integration
 from snail_core.uploader import Uploader, UploadError
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TestUploadErrors(unittest.TestCase):

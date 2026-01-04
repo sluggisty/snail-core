@@ -11,7 +11,11 @@ import sys
 import unittest
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
+
+
+@pytest.mark.cli
 
 
 class TestCliBasic(unittest.TestCase):

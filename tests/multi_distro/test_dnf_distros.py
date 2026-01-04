@@ -11,6 +11,10 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from snail_core.collectors.packages import PackagesCollector
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TestDnfDistros(unittest.TestCase):

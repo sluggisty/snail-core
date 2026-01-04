@@ -12,8 +12,20 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from snail_core.collectors.base import BaseCollector
+import pytest
+
+
+@pytest.mark.integration
 from snail_core.core import SnailCore
+import pytest
+
+
+@pytest.mark.integration
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TimeoutCollector(BaseCollector):

@@ -11,6 +11,10 @@ import unittest
 from unittest.mock import patch
 
 from snail_core.collectors.security import SecurityCollector
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TestSelinux(unittest.TestCase):

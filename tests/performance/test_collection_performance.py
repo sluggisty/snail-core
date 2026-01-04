@@ -16,7 +16,17 @@ from pathlib import Path
 from unittest.mock import patch
 
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.performance
+@pytest.mark.slow
 from snail_core.core import SnailCore
+import pytest
+
+
+@pytest.mark.performance
+@pytest.mark.slow
 
 
 class TestCollectionPerformance(unittest.TestCase):

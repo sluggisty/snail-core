@@ -14,6 +14,11 @@ from pathlib import Path
 from threading import Thread
 from unittest.mock import patch
 
+import pytest
+
+
+@pytest.mark.integration
+
 from snail_core.config import Config
 from snail_core.core import SnailCore
 from snail_core.uploader import Uploader

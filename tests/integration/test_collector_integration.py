@@ -11,8 +11,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from snail_core.config import Config
 from snail_core.core import CollectionReport, SnailCore
+
+
+@pytest.mark.integration
 
 
 class TestCollectorIntegration(unittest.TestCase):
