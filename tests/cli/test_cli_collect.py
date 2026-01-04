@@ -13,7 +13,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
+
+
+@pytest.mark.cli
 
 
 class TestCliCollect(unittest.TestCase):

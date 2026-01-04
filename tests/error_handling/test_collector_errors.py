@@ -11,7 +11,15 @@ import unittest
 from unittest.mock import patch
 
 from snail_core.collectors.base import BaseCollector
+import pytest
+
+
+@pytest.mark.integration
 from snail_core.collectors.system import SystemCollector
+import pytest
+
+
+@pytest.mark.integration
 
 
 class FailingCollector(BaseCollector):

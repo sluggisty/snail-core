@@ -14,7 +14,15 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.e2e
 from snail_core.core import CollectionReport, SnailCore
+import pytest
+
+
+@pytest.mark.e2e
 
 
 class TestFullWorkflow(unittest.TestCase):
@@ -188,6 +196,10 @@ class TestFullWorkflow(unittest.TestCase):
         )
 
         from snail_core.uploader import Uploader
+import pytest
+
+
+@pytest.mark.e2e
         uploader = Uploader(config)
 
         # Check that API key is set in session headers
@@ -210,6 +222,10 @@ class TestFullWorkflow(unittest.TestCase):
         )
 
         from snail_core.uploader import Uploader
+import pytest
+
+
+@pytest.mark.e2e
         uploader = Uploader(config)
 
         test_data = {"test": "data", "numbers": [1, 2, 3], "nested": {"key": "value"}}

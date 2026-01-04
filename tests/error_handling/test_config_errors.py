@@ -15,6 +15,10 @@ from unittest.mock import patch
 import yaml
 
 from snail_core.config import Config
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TestConfigErrors(unittest.TestCase):

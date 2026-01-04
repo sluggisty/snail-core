@@ -11,6 +11,10 @@ import unittest
 from unittest.mock import patch
 
 from snail_core.collectors.packages import PackagesCollector
+import pytest
+
+
+@pytest.mark.integration
 
 
 class TestPackageManagerFallback(unittest.TestCase):

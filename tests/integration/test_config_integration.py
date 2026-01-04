@@ -12,7 +12,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from snail_core.config import Config, DEFAULT_CONFIG_PATHS
+
+
+@pytest.mark.integration
 
 
 class TestConfigIntegration(unittest.TestCase):

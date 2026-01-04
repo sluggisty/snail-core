@@ -13,6 +13,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from snail_core.collectors.base import BaseCollector
+import pytest
+
+
+@pytest.mark.integration
 
 
 class FileErrorCollector(BaseCollector):

@@ -10,7 +10,11 @@ import sys
 import unittest
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
+
+
+@pytest.mark.cli
 
 
 class TestCliStatus(unittest.TestCase):
