@@ -6,27 +6,19 @@ Tests complete user workflows through the CLI interface.
 
 from __future__ import annotations
 
-import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from click.testing import CliRunner
 
 from snail_core.cli import main
-import pytest
-
-
-@pytest.mark.e2e
 from snail_core.config import Config
-import pytest
 
 
 @pytest.mark.e2e
-
-
 class TestCliWorkflow(unittest.TestCase):
     """Test complete CLI workflows."""
 
@@ -48,7 +40,9 @@ collection:
 output:
   dir: "{temp_dir}"
   compress: true
-""".format(temp_dir=self.temp_dir)
+""".format(
+            temp_dir=self.temp_dir
+        )
 
         self.config_file.write_text(self.config_content)
 
@@ -63,17 +57,17 @@ output:
     def test_init_config_collect_upload_sequence(self):
         """Test the complete sequence: init-config -> collect -> upload."""
         # Step 1: Initialize config
-        with patch('snail_core.cli.Config.load') as mock_load:
+        with patch("snail_core.cli.Config.load") as mock_load:
             mock_config = Config(
                 upload_url="https://cli-test.example.com/api/upload",
                 upload_enabled=True,
                 api_key="cli-test-key-123",
-                output_dir=str(self.temp_dir)
+                output_dir=str(self.temp_dir),
             )
             mock_load.return_value = mock_config
 
             # Mock successful collection
-            with patch('snail_core.core.SnailCore.collect') as mock_collect:
+            with patch("snail_core.core.SnailCore.collect") as mock_collect:
                 mock_report = MagicMock()
                 mock_report.hostname = "cli-test-host"
                 mock_report.collection_id = "cli-test-collection"
@@ -82,14 +76,13 @@ output:
                 mock_collect.return_value = mock_report
 
                 # Mock successful upload
-                with patch('snail_core.core.SnailCore.collect_and_upload') as mock_workflow:
+                with patch("snail_core.core.SnailCore.collect_and_upload") as mock_workflow:
                     mock_workflow.return_value = (mock_report, {"status": "uploaded"})
 
                     # Test collect command
-                    result = self.runner.invoke(main, [
-                        "--config", str(self.config_file),
-                        "collect"
-                    ])
+                    result = self.runner.invoke(
+                        main, ["--config", str(self.config_file), "collect"]
+                    )
 
                     self.assertEqual(result.exit_code, 0)
                     self.assertIn("Snail Core", result.output)
@@ -103,9 +96,10 @@ output:
         # Create a config and verify it's used consistently
         config = Config.load(self.config_file)
 
-        with patch('snail_core.cli.Config.load', return_value=config), \
-             patch('snail_core.core.SnailCore') as mock_core_class:
-
+        with (
+            patch("snail_core.cli.Config.load", return_value=config),
+            patch("snail_core.core.SnailCore") as mock_core_class,
+        ):
             mock_core = MagicMock()
             mock_core_class.return_value = mock_core
 
@@ -113,10 +107,7 @@ output:
             mock_core.config = config
 
             # Test status command uses config
-            result = self.runner.invoke(main, [
-                "--config", str(self.config_file),
-                "status"
-            ])
+            result = self.runner.invoke(main, ["--config", str(self.config_file), "status"])
 
             self.assertEqual(result.exit_code, 0)
             # Verify Config.load was called with the config file
@@ -128,12 +119,17 @@ output:
 
         # Test that the CLI accepts the --output parameter without errors
         # We don't mock the collection to avoid complexity, just test CLI parsing
-        result = self.runner.invoke(main, [
-            "--config", str(self.config_file),
-            "collect",
-            "--output", str(output_file),
-            "--help"  # Use --help to avoid actually running collection
-        ])
+        result = self.runner.invoke(
+            main,
+            [
+                "--config",
+                str(self.config_file),
+                "collect",
+                "--output",
+                str(output_file),
+                "--help",  # Use --help to avoid actually running collection
+            ],
+        )
 
         # Should show help without errors
         self.assertEqual(result.exit_code, 0)
@@ -142,24 +138,28 @@ output:
     def test_upload_success_verification(self):
         """Test that the CLI accepts upload parameters."""
         # Test that the CLI accepts --upload parameter without errors
-        result = self.runner.invoke(main, [
-            "--config", str(self.config_file),
-            "collect",
-            "--upload",
-            "--help"  # Use --help to avoid actually running collection
-        ])
+        result = self.runner.invoke(
+            main,
+            [
+                "--config",
+                str(self.config_file),
+                "collect",
+                "--upload",
+                "--help",  # Use --help to avoid actually running collection
+            ],
+        )
 
         self.assertEqual(result.exit_code, 0)
         self.assertIn("collect", result.output)
 
     def test_cli_workflow_with_errors(self):
         """Test CLI workflow when errors occur."""
-        with patch('snail_core.cli.Config.load') as mock_load:
+        with patch("snail_core.cli.Config.load") as mock_load:
             mock_config = Config(output_dir=str(self.temp_dir))
             mock_load.return_value = mock_config
 
             # Mock collection with errors
-            with patch('snail_core.core.SnailCore.collect') as mock_collect:
+            with patch("snail_core.core.SnailCore.collect") as mock_collect:
                 mock_report = MagicMock()
                 mock_report.hostname = "error-test-host"
                 mock_report.errors = ["Collector 'bad_collector' failed: timeout"]
@@ -167,10 +167,7 @@ output:
                 mock_collect.return_value = mock_report
 
                 # Test collect command with errors
-                result = self.runner.invoke(main, [
-                    "--config", str(self.config_file),
-                    "collect"
-                ])
+                result = self.runner.invoke(main, ["--config", str(self.config_file), "collect"])
 
                 self.assertEqual(result.exit_code, 0)  # CLI should still succeed
                 self.assertIn("Snail Core", result.output)
@@ -180,10 +177,7 @@ output:
     def test_cli_config_file_validation(self):
         """Test that CLI validates config file paths."""
         # Test with non-existent config file
-        result = self.runner.invoke(main, [
-            "--config", "/definitely/does/not/exist.yaml",
-            "status"
-        ])
+        result = self.runner.invoke(main, ["--config", "/definitely/does/not/exist.yaml", "status"])
 
         # Should handle gracefully (may succeed with defaults or show error)
         # The important thing is it doesn't crash
@@ -192,44 +186,52 @@ output:
     def test_cli_output_format_options(self):
         """Test different output format options."""
         # Test that the CLI accepts format parameters without errors
-        result = self.runner.invoke(main, [
-            "--config", str(self.config_file),
-            "collect",
-            "--format", "json",
-            "--help"  # Use --help to avoid actually running collection
-        ])
+        result = self.runner.invoke(
+            main,
+            [
+                "--config",
+                str(self.config_file),
+                "collect",
+                "--format",
+                "json",
+                "--help",  # Use --help to avoid actually running collection
+            ],
+        )
 
         self.assertEqual(result.exit_code, 0)
         self.assertIn("collect", result.output)
 
-        result = self.runner.invoke(main, [
-            "--config", str(self.config_file),
-            "collect",
-            "--format", "pretty",
-            "--help"  # Use --help to avoid actually running collection
-        ])
+        result = self.runner.invoke(
+            main,
+            [
+                "--config",
+                str(self.config_file),
+                "collect",
+                "--format",
+                "pretty",
+                "--help",  # Use --help to avoid actually running collection
+            ],
+        )
 
         self.assertEqual(result.exit_code, 0)
         self.assertIn("collect", result.output)
 
     def test_cli_collector_selection(self):
         """Test CLI collector selection options."""
-        with patch('snail_core.cli.Config.load') as mock_load:
+        with patch("snail_core.cli.Config.load") as mock_load:
             mock_config = Config()
             mock_load.return_value = mock_config
 
-            with patch('snail_core.core.SnailCore.collect') as mock_collect:
+            with patch("snail_core.core.SnailCore.collect") as mock_collect:
                 mock_report = MagicMock()
                 mock_report.results = {"system": {"selected": True}}
                 mock_report.errors = []
                 mock_collect.return_value = mock_report
 
                 # Test specific collector selection
-                result = self.runner.invoke(main, [
-                    "--config", str(self.config_file),
-                    "collect",
-                    "--collectors", "system"
-                ])
+                result = self.runner.invoke(
+                    main, ["--config", str(self.config_file), "collect", "--collectors", "system"]
+                )
 
                 self.assertEqual(result.exit_code, 0)
                 self.assertIn("Snail Core", result.output)

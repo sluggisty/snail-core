@@ -7,32 +7,20 @@ Tests that collectors can process large amounts of data without performance degr
 from __future__ import annotations
 
 import gc
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from snail_core.collectors.packages import PackagesCollector
 import pytest
 
-
-@pytest.mark.performance
-@pytest.mark.slow
-from snail_core.collectors.services import ServicesCollector
-import pytest
-
-
-@pytest.mark.performance
-@pytest.mark.slow
 from snail_core.collectors.filesystem import FilesystemCollector
-import pytest
+from snail_core.collectors.packages import PackagesCollector
+from snail_core.collectors.services import ServicesCollector
 
 
 @pytest.mark.performance
 @pytest.mark.slow
-
-
 class TestLargeDatasets(unittest.TestCase):
     """Test handling of large datasets by collectors."""
 
@@ -57,13 +45,28 @@ class TestLargeDatasets(unittest.TestCase):
         for i in range(1000):
             packages.append(f"package-{i}-name.x86_64    1.0.{i}-1.el9     @baseos")
 
-        large_package_output = "\n".join([
-            "Updating Subscription Management repositories.",
-            "Last metadata expiration check: 0:00:01 ago on Mon 01 Jan 2024 12:00:00 PM EST.",
-            "Installed Packages",
-        ] + packages)
+        large_package_output = "\n".join(
+            [
+                "Updating Subscription Management repositories.",
+                "Last metadata expiration check: 0:00:01 ago on Mon 01 Jan 2024 12:00:00 PM EST.",
+                "Installed Packages",
+            ]
+            + packages
+        )
 
-        with patch.object(collector, 'run_command') as mock_run:
+        with (
+            patch.object(collector, "run_command") as mock_run,
+            patch.object(
+                collector,
+                "detect_distro",
+                return_value={
+                    "id": "fedora",
+                    "version": "39",
+                    "name": "Fedora Linux",
+                    "like": "rhel",
+                },
+            ),
+        ):
             # Mock all the commands that packages collector uses
             call_count = 0
 
@@ -72,9 +75,20 @@ class TestLargeDatasets(unittest.TestCase):
                 call_count += 1
                 cmd = args[0] if args else []
 
-                if 'dnf' in cmd and 'repolist' in cmd:
-                    return ("repo id                           repo name\nbaseos                            Base OS", "", 0)
-                elif 'rpm' in cmd and '-qa' in cmd:
+                if "dnf" in cmd and "repolist" in cmd:
+                    return (
+                        "repo id                           repo name\nbaseos                            Base OS",
+                        "",
+                        0,
+                    )
+                elif "rpm" in cmd and "-qa" in cmd and "--qf" in cmd and "%{ARCH}" in " ".join(cmd):
+                    # Return architecture list (one per package)
+                    arch_output = "\n".join(["x86_64"] * 1000)
+                    return (arch_output, "", 0)
+                elif "rpm" in cmd and "-qa" in cmd and "gpg-pubkey" in " ".join(cmd):
+                    # Return GPG keys
+                    return ("gpg-pubkey-12345678-12345678\ngpg-pubkey-87654321-87654321", "", 0)
+                elif "rpm" in cmd and "-qa" in cmd:
                     return (large_package_output, "", 0)
                 else:
                     return ("", "", 0)  # Default success
@@ -86,9 +100,8 @@ class TestLargeDatasets(unittest.TestCase):
             # Should handle large dataset
             self.assertIn("summary", result)
             self.assertIn("total_count", result["summary"])
-            # Should handle approximately 1000 packages (allow some tolerance for parsing)
-            self.assertGreater(result["summary"]["total_count"], 900)
-            self.assertLess(result["summary"]["total_count"], 1100)
+            # Should handle exactly 1000 packages (one architecture per package)
+            self.assertEqual(result["summary"]["total_count"], 1000)
 
             # Should not have excessive memory usage (check completed without error)
             self.assertIsInstance(result, dict)
@@ -102,11 +115,14 @@ class TestLargeDatasets(unittest.TestCase):
         for i in range(500):
             services.append(f"service-{i}.service     loaded active running   Test Service {i}")
 
-        large_service_output = "\n".join([
-            "UNIT                                 LOAD   ACTIVE SUB     DESCRIPTION",
-        ] + services)
+        large_service_output = "\n".join(
+            [
+                "UNIT                                 LOAD   ACTIVE SUB     DESCRIPTION",
+            ]
+            + services
+        )
 
-        with patch.object(collector, 'run_command') as mock_run:
+        with patch.object(collector, "run_command") as mock_run:
             call_count = 0
 
             def mock_commands(*args, **kwargs):
@@ -114,9 +130,9 @@ class TestLargeDatasets(unittest.TestCase):
                 call_count += 1
                 cmd = args[0] if args else []
 
-                if 'systemctl' in cmd and 'list-units' in cmd:
+                if "systemctl" in cmd and "list-units" in cmd:
                     return (large_service_output, "", 0)
-                elif 'systemctl' in cmd and 'show' in cmd:
+                elif "systemctl" in cmd and "show" in cmd:
                     return ("Id=systemd\nDescription=systemd\n", "", 0)
                 else:
                     return ("", "", 0)
@@ -145,7 +161,7 @@ class TestLargeDatasets(unittest.TestCase):
         log_file = self.temp_dir / "large_log"
         log_file.write_text(log_content)
 
-        with patch.object(collector, 'run_command') as mock_run:
+        with patch.object(collector, "run_command") as mock_run:
             call_count = 0
 
             def mock_commands(*args, **kwargs):
@@ -153,19 +169,30 @@ class TestLargeDatasets(unittest.TestCase):
                 call_count += 1
                 cmd = args[0] if args else []
 
-                if 'df' in cmd:
-                    return ("Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       1000000  500000    500000  50% /\n", "", 0)
-                elif 'mount' in cmd:
+                if "df" in cmd:
+                    return (
+                        "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       1000000  500000    500000  50% /\n",
+                        "",
+                        0,
+                    )
+                elif "mount" in cmd:
                     return ("/dev/sda1 on / type ext4 (rw,relatime)\n", "", 0)
-                elif 'lsblk' in cmd:
-                    return ("NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT\nsda  8:0    0  50G  0 disk \nsda1 8:1    0  50G  0 part /\n", "", 0)
+                elif "lsblk" in cmd:
+                    return (
+                        "NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT\nsda  8:0    0  50G  0 disk \nsda1 8:1    0  50G  0 part /\n",
+                        "",
+                        0,
+                    )
                 else:
                     return ("", "", 0)
 
             mock_run.side_effect = mock_commands
 
             # Mock the log file reading
-            with patch('snail_core.collectors.filesystem.FilesystemCollector.read_file') as mock_read:
+            with patch(
+                "snail_core.collectors.filesystem.FilesystemCollector.read_file"
+            ) as mock_read:
+
                 def mock_read_file(path, default=""):
                     if str(log_file) in path:
                         return log_content
@@ -200,8 +227,7 @@ class TestLargeDatasets(unittest.TestCase):
             packages_memory_delta = after_packages_memory - initial_memory
 
             # Should not use excessive memory (less than 50MB for processing)
-            self.assertLess(packages_memory_delta, 50,
-                           ".1f")
+            self.assertLess(packages_memory_delta, 50, ".1f")
 
             # Force cleanup
             gc.collect()
@@ -213,8 +239,7 @@ class TestLargeDatasets(unittest.TestCase):
             services_memory_delta = after_services_memory - after_packages_memory
 
             # Should not use excessive memory
-            self.assertLess(services_memory_delta, 50,
-                           ".1f")
+            self.assertLess(services_memory_delta, 50, ".1f")
 
         finally:
             # Clean up
@@ -230,7 +255,7 @@ class TestLargeDatasets(unittest.TestCase):
             "name": "Large Test Repository",
             "enabled": True,
             "baseurl": ["http://example.com/repo"] * 100,  # 100 URLs
-            "packages": {}
+            "packages": {},
         }
 
         # Add many packages
@@ -238,11 +263,11 @@ class TestLargeDatasets(unittest.TestCase):
             large_repo_data["packages"][f"package-{i}"] = {
                 "version": f"1.0.{i}",
                 "size": 1024 * i,
-                "dependencies": [f"dep-{j}" for j in range(10)]  # 10 deps each
+                "dependencies": [f"dep-{j}" for j in range(10)],  # 10 deps each
             }
 
         # Mock the collector to return this large structure
-        with patch.object(collector, 'run_command') as mock_run:
+        with patch.object(collector, "run_command") as mock_run:
             mock_run.return_value = ("", "", 0)
 
             # Manually create result to test structure handling
@@ -250,7 +275,7 @@ class TestLargeDatasets(unittest.TestCase):
                 "package_manager": "dnf",
                 "repositories": [large_repo_data],
                 "summary": {"total_count": 5000, "by_arch": {"x86_64": 5000}},
-                "large_data": large_repo_data
+                "large_data": large_repo_data,
             }
 
             # Should handle large nested structure
@@ -260,6 +285,7 @@ class TestLargeDatasets(unittest.TestCase):
 
             # Should be able to serialize (basic check)
             import json
+
             try:
                 json_str = json.dumps(result, default=str)
                 self.assertGreater(len(json_str), 1000000)  # Should be quite large
@@ -282,7 +308,7 @@ class TestLargeDatasets(unittest.TestCase):
 
             start_time = time.perf_counter()
 
-            with patch.object(collector, 'run_command') as mock_run:
+            with patch.object(collector, "run_command") as mock_run:
                 mock_run.return_value = ("\n".join(packages), "", 0)
 
                 # Test just the data processing part
@@ -297,35 +323,29 @@ class TestLargeDatasets(unittest.TestCase):
         # Time for 2000 items should be less than 10x time for 100 items
         if times[0] > 0:
             degradation_ratio = times[-1] / times[0]
-            self.assertLess(degradation_ratio, 10,
-                           f"Performance degraded {degradation_ratio:.2f}x with 20x data increase")
+            self.assertLess(
+                degradation_ratio,
+                10,
+                f"Performance degraded {degradation_ratio:.2f}x with 20x data increase",
+            )
 
-        print(f"\nData size performance: {[f'{sizes[i]}: {times[i]:.4f}s' for i in range(len(sizes))]}")
+        print(
+            f"\nData size performance: {[f'{sizes[i]}: {times[i]:.4f}s' for i in range(len(sizes))]}"
+        )
 
     def test_large_configuration_handling(self):
         """Test handling of large configuration datasets."""
         from snail_core.config import Config
-import pytest
-
-
-@pytest.mark.performance
-@pytest.mark.slow
 
         # Create a config with many enabled collectors
         large_config = {
-            "upload": {
-                "enabled": True,
-                "url": "https://example.com"
-            },
+            "upload": {"enabled": True, "url": "https://example.com"},
             "collection": {
                 "enabled_collectors": [f"collector_{i}" for i in range(100)],  # 100 collectors
                 "disabled_collectors": [],
-                "timeout": 300
+                "timeout": 300,
             },
-            "output": {
-                "dir": "/tmp/test",
-                "compress": True
-            }
+            "output": {"dir": "/tmp/test", "compress": True},
         }
 
         config = Config.from_dict(large_config)
@@ -342,7 +362,7 @@ import pytest
         # Test with very large command output (simulate command with lots of output)
         large_output = "package\n" * 100000  # 100,000 lines
 
-        with patch.object(collector, 'run_command') as mock_run:
+        with patch.object(collector, "run_command") as mock_run:
             mock_run.return_value = (large_output, "", 0)
 
             result = collector.collect()

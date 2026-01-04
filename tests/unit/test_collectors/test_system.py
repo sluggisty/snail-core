@@ -6,9 +6,7 @@ Tests OS info, kernel, hostname, uptime, and virtualization collection.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from snail_core.collectors.system import SystemCollector
 
@@ -76,4 +74,3 @@ class TestSystemCollector:
             assert result["id"] == "fedora"
             assert result["name"] == "Fedora Linux"
             assert "architecture" in result
-

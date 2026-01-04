@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
-
 from snail_core.collectors.services import ServicesCollector
 
 
@@ -69,4 +67,3 @@ class TestServicesCollector:
         with patch.object(collector, "run_command", return_value=(mock_output, "", 0)):
             result = collector._get_running_services()
             assert isinstance(result, list)
-

@@ -9,8 +9,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-import pytest
-
 from snail_core.config import Config
 from snail_core.core import CollectionReport, SnailCore
 
@@ -302,6 +300,7 @@ class TestCollectionReport:
 
         # Should be valid JSON
         import json
+
         data = json.loads(json_str)
         assert "meta" in data
         assert "data" in data

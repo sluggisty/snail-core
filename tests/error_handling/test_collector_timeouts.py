@@ -6,28 +6,17 @@ Tests that collectors handle timeouts correctly and errors are properly captured
 
 from __future__ import annotations
 
-import sys
-import time
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+import pytest
 
 from snail_core.collectors.base import BaseCollector
-import pytest
-
-
-@pytest.mark.integration
-from snail_core.core import SnailCore
-import pytest
-
-
-@pytest.mark.integration
 from snail_core.config import Config
-import pytest
+from snail_core.core import SnailCore
 
 
 @pytest.mark.integration
-
-
 class TimeoutCollector(BaseCollector):
     """Test collector that simulates timeout behavior."""
 
@@ -71,80 +60,83 @@ class TestCollectorTimeouts(unittest.TestCase):
     def test_collector_timeout_error_capture(self):
         """Test that collector timeouts are captured in error list."""
         # Mock the collectors before SnailCore initialization
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'timeout_test': TimeoutCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors", return_value={"timeout_test": TimeoutCollector}
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['timeout_test'])
+            report = core.collect(["timeout_test"])
 
             # Should have error in the errors list
             self.assertTrue(len(report.errors) > 0)
-            error_found = any("timeout" in error.lower() or "timed out" in error.lower()
-                            for error in report.errors)
+            error_found = any(
+                "timeout" in error.lower() or "timed out" in error.lower()
+                for error in report.errors
+            )
             self.assertTrue(error_found, f"Timeout error not found in: {report.errors}")
 
             # Should not have successful data
-            self.assertNotIn('timeout_test', report.results)
+            self.assertNotIn("timeout_test", report.results)
 
     def test_collector_timeout_continues_with_other_collectors(self):
         """Test that collection continues with other collectors after timeout."""
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'timeout_test': TimeoutCollector,
-            'success_test': SuccessCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors",
+            return_value={"timeout_test": TimeoutCollector, "success_test": SuccessCollector},
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['timeout_test', 'success_test'])
+            report = core.collect(["timeout_test", "success_test"])
 
             # Should have one error for timeout
             self.assertEqual(len(report.errors), 1)
 
             # Should have successful data for the non-timeout collector
-            self.assertIn('success_test', report.results)
-            self.assertEqual(report.results['success_test']['status'], 'success')
+            self.assertIn("success_test", report.results)
+            self.assertEqual(report.results["success_test"]["status"], "success")
 
             # Should not have data for timeout collector
-            self.assertNotIn('timeout_test', report.results)
+            self.assertNotIn("timeout_test", report.results)
 
     def test_collector_exception_error_capture(self):
         """Test that collector exceptions are captured in error list."""
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'fail_test': FailingCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors", return_value={"fail_test": FailingCollector}
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['fail_test'])
+            report = core.collect(["fail_test"])
 
             # Should have error in the errors list
             self.assertEqual(len(report.errors), 1)
             self.assertIn("Simulated collector failure", report.errors[0])
 
             # Should not have successful data
-            self.assertNotIn('fail_test', report.results)
+            self.assertNotIn("fail_test", report.results)
 
     def test_successful_collector_not_affected_by_timeout(self):
         """Test that successful collectors work normally."""
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'success_test': SuccessCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors", return_value={"success_test": SuccessCollector}
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['success_test'])
+            report = core.collect(["success_test"])
 
             # Should have no errors
             self.assertEqual(len(report.errors), 0)
 
             # Should have successful data
-            self.assertIn('success_test', report.results)
-            self.assertEqual(report.results['success_test']['status'], 'success')
+            self.assertIn("success_test", report.results)
+            self.assertEqual(report.results["success_test"]["status"], "success")
 
     def test_run_command_timeout_handling(self):
         """Test that run_command handles timeouts correctly."""
         collector = TimeoutCollector()
 
         # Mock subprocess.run to raise TimeoutExpired
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             from subprocess import TimeoutExpired
-            mock_run.side_effect = TimeoutExpired(['sleep', '10'], 30)
 
-            stdout, stderr, returncode = collector.run_command(['sleep', '10'], timeout=1)
+            mock_run.side_effect = TimeoutExpired(["sleep", "10"], 30)
+
+            stdout, stderr, returncode = collector.run_command(["sleep", "10"], timeout=1)
 
             self.assertEqual(stdout, "")
             self.assertEqual(stderr, "Command timed out")
@@ -154,7 +146,7 @@ class TestCollectorTimeouts(unittest.TestCase):
         """Test that run_command handles missing commands."""
         collector = TimeoutCollector()
 
-        stdout, stderr, returncode = collector.run_command(['nonexistent_command'])
+        stdout, stderr, returncode = collector.run_command(["nonexistent_command"])
 
         self.assertEqual(stdout, "")
         self.assertIn("Command not found", stderr)
@@ -164,41 +156,45 @@ class TestCollectorTimeouts(unittest.TestCase):
         """Test that run_command handles command failures."""
         collector = TimeoutCollector()
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             from subprocess import CalledProcessError
-            mock_run.side_effect = CalledProcessError(1, ['failing_cmd'], 'out', 'err')
 
-            stdout, stderr, returncode = collector.run_command(['failing_cmd'])
+            mock_run.side_effect = CalledProcessError(1, ["failing_cmd"], "out", "err")
 
-            self.assertEqual(stdout, 'out')
-            self.assertEqual(stderr, 'err')
+            stdout, stderr, returncode = collector.run_command(["failing_cmd"])
+
+            self.assertEqual(stdout, "out")
+            self.assertEqual(stderr, "err")
             self.assertEqual(returncode, 1)
 
     def test_multiple_collector_errors_accumulate(self):
         """Test that multiple collector errors are all captured."""
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'fail1': FailingCollector,
-            'fail2': FailingCollector,
-            'success': SuccessCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors",
+            return_value={
+                "fail1": FailingCollector,
+                "fail2": FailingCollector,
+                "success": SuccessCollector,
+            },
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['fail1', 'fail2', 'success'])
+            report = core.collect(["fail1", "fail2", "success"])
 
             # Should have 2 errors
             self.assertEqual(len(report.errors), 2)
 
             # Should have successful data
-            self.assertIn('success', report.results)
-            self.assertNotIn('fail1', report.results)
-            self.assertNotIn('fail2', report.results)
+            self.assertIn("success", report.results)
+            self.assertNotIn("fail1", report.results)
+            self.assertNotIn("fail2", report.results)
 
     def test_timeout_error_message_format(self):
         """Test that timeout error messages are properly formatted."""
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'timeout_test': TimeoutCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors", return_value={"timeout_test": TimeoutCollector}
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['timeout_test'])
+            report = core.collect(["timeout_test"])
 
             self.assertEqual(len(report.errors), 1)
             error_msg = report.errors[0]
@@ -207,11 +203,11 @@ class TestCollectorTimeouts(unittest.TestCase):
 
     def test_collection_report_structure_with_errors(self):
         """Test that collection report maintains proper structure with errors."""
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'mixed_test': SuccessCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors", return_value={"mixed_test": SuccessCollector}
+        ):
             core = SnailCore(self.config)
-            report = core.collect(['mixed_test'])
+            report = core.collect(["mixed_test"])
 
             # Check report has all required fields
             self.assertIsInstance(report.hostname, str)
@@ -223,5 +219,5 @@ class TestCollectorTimeouts(unittest.TestCase):
             self.assertIsInstance(report.errors, list)
 
             # Should have successful results
-            self.assertIn('mixed_test', report.results)
+            self.assertIn("mixed_test", report.results)
             self.assertEqual(len(report.errors), 0)

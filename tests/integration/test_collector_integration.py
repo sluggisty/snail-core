@@ -18,8 +18,6 @@ from snail_core.core import CollectionReport, SnailCore
 
 
 @pytest.mark.integration
-
-
 class TestCollectorIntegration(unittest.TestCase):
     """Integration tests for collector execution in SnailCore context."""
 
@@ -80,10 +78,19 @@ class TestCollectorIntegration(unittest.TestCase):
 
         # Mock all collectors to return minimal data quickly
         mock_collectors = {}
-        expected_collectors = ["system", "hardware", "network", "packages",
-                              "services", "filesystem", "security", "logs"]
+        expected_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in expected_collectors:
             from snail_core.collectors.base import BaseCollector
+
             mock_collectors[name] = self._create_mock_collector(BaseCollector, name)
 
         # Mock host_id and hostname
@@ -112,9 +119,18 @@ class TestCollectorIntegration(unittest.TestCase):
 
         # Create collectors where one fails
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
-        expected_collectors = ["system", "hardware", "network", "packages",
-                              "services", "filesystem", "security", "logs"]
+        expected_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in expected_collectors:
             if name == "system":
                 # Make system collector fail
@@ -150,9 +166,18 @@ class TestCollectorIntegration(unittest.TestCase):
 
         # Mock collectors
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
-        expected_collectors = ["system", "hardware", "network", "packages",
-                              "services", "filesystem", "security", "logs"]
+        expected_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in expected_collectors:
             mock_collectors[name] = self._create_mock_collector(BaseCollector, name)
 
@@ -178,9 +203,18 @@ class TestCollectorIntegration(unittest.TestCase):
 
         # Mock collectors
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
-        expected_collectors = ["system", "hardware", "network", "packages",
-                              "services", "filesystem", "security", "logs"]
+        expected_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in expected_collectors:
             mock_collectors[name] = self._create_mock_collector(BaseCollector, name)
 
@@ -189,7 +223,9 @@ class TestCollectorIntegration(unittest.TestCase):
             with patch("socket.gethostname", return_value="test-host"):
                 with patch("snail_core.core.get_all_collectors", return_value=mock_collectors):
                     core = SnailCore(config)
-                    report = core.collect(collector_names=["system", "nonexistent", "hardware", "also_invalid"])
+                    report = core.collect(
+                        collector_names=["system", "nonexistent", "hardware", "also_invalid"]
+                    )
 
         # Should only have results for valid collectors
         self.assertIn("system", report.results)
@@ -206,9 +242,18 @@ class TestCollectorIntegration(unittest.TestCase):
 
         # Mock collectors
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
-        expected_collectors = ["system", "hardware", "network", "packages",
-                              "services", "filesystem", "security", "logs"]
+        expected_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in expected_collectors:
             mock_collectors[name] = self._create_mock_collector(BaseCollector, name)
 
@@ -263,6 +308,7 @@ class TestCollectorIntegration(unittest.TestCase):
 
         # Test JSON serialization (should not raise)
         import json
+
         json_str = report.to_json()
         self.assertIsInstance(json_str, str)
 
@@ -273,6 +319,7 @@ class TestCollectorIntegration(unittest.TestCase):
 
     def _create_mock_collector(self, collector_cls, name):
         """Create a mock collector class that returns test data."""
+
         class MockCollector(collector_cls):
             def collect(self):
                 return {
@@ -281,13 +328,16 @@ class TestCollectorIntegration(unittest.TestCase):
                     "test_data": f"data_from_{name}",
                     "items": ["item1", "item2"],
                 }
+
         return MockCollector
 
     def _create_failing_mock_collector(self, collector_cls, name):
         """Create a mock collector class that raises an exception."""
+
         class FailingMockCollector(collector_cls):
             def collect(self):
                 raise Exception("Test failure for collector integration testing")
+
         return FailingMockCollector
 
 
@@ -311,9 +361,18 @@ class TestCollectorFiltering(unittest.TestCase):
 
         # Mock collectors
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
-        all_collectors = ["system", "hardware", "network", "packages",
-                         "services", "filesystem", "security", "logs"]
+        all_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in all_collectors:
             mock_collectors[name] = self._create_mock_collector(BaseCollector, name)
 
@@ -343,9 +402,18 @@ class TestCollectorFiltering(unittest.TestCase):
 
         # Mock collectors
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
-        all_collectors = ["system", "hardware", "network", "packages",
-                         "services", "filesystem", "security", "logs"]
+        all_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for name in all_collectors:
             mock_collectors[name] = self._create_mock_collector(BaseCollector, name)
 
@@ -361,7 +429,15 @@ class TestCollectorFiltering(unittest.TestCase):
         self.assertEqual(len(report.results), 1)
 
         # Should not have results for other collectors
-        other_collectors = ["hardware", "network", "packages", "services", "filesystem", "security", "logs"]
+        other_collectors = [
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
         for collector_name in other_collectors:
             self.assertNotIn(collector_name, report.results)
 
@@ -373,6 +449,7 @@ class TestCollectorFiltering(unittest.TestCase):
 
         # Mock collectors
         from snail_core.collectors.base import BaseCollector
+
         mock_collectors = {}
         valid_collectors = ["system", "hardware", "network"]
         for name in valid_collectors:
@@ -383,7 +460,9 @@ class TestCollectorFiltering(unittest.TestCase):
             with patch("socket.gethostname", return_value="test-host"):
                 with patch("snail_core.core.get_all_collectors", return_value=mock_collectors):
                     core = SnailCore(config)
-                    report = core.collect(collector_names=["system", "invalid1", "hardware", "invalid2", "network"])
+                    report = core.collect(
+                        collector_names=["system", "invalid1", "hardware", "invalid2", "network"]
+                    )
 
         # Should only have results for valid collectors
         self.assertIn("system", report.results)
@@ -403,6 +482,7 @@ class TestCollectorFiltering(unittest.TestCase):
 
     def _create_mock_collector(self, collector_cls, name):
         """Create a mock collector class that returns test data."""
+
         class MockCollector(collector_cls):
             def collect(self):
                 return {
@@ -410,4 +490,5 @@ class TestCollectorFiltering(unittest.TestCase):
                     "status": "success",
                     "test_data": f"data_from_{name}",
                 }
+
         return MockCollector

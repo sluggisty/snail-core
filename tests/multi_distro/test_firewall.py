@@ -6,17 +6,15 @@ Tests SecurityCollector firewall functionality across different Linux distributi
 
 from __future__ import annotations
 
-import sys
 import unittest
 from unittest.mock import patch
 
-from snail_core.collectors.security import SecurityCollector
 import pytest
+
+from snail_core.collectors.security import SecurityCollector
 
 
 @pytest.mark.integration
-
-
 class TestFirewall(unittest.TestCase):
     """Test firewall detection and reporting."""
 
@@ -43,18 +41,30 @@ class TestFirewall(unittest.TestCase):
                 return ("", "", 1)
 
         with patch.object(self.collector, "run_command", side_effect=mock_run):
-
             result = self.collector._get_firewall_status()
 
             self.assertEqual(result["type"], "firewalld")
             self.assertTrue(result["enabled"])
             self.assertTrue(result["running"])
-            self.assertEqual(result["zones"], ["block", "dmz", "drop", "external", "home",
-                                              "internal", "public", "trusted", "work"])
+            self.assertEqual(
+                result["zones"],
+                [
+                    "block",
+                    "dmz",
+                    "drop",
+                    "external",
+                    "home",
+                    "internal",
+                    "public",
+                    "trusted",
+                    "work",
+                ],
+            )
             self.assertEqual(result["default_zone"], "public")
 
     def test_firewalld_not_running(self):
         """Test firewalld detection when service is not running."""
+
         def mock_run(*args, **kwargs):
             cmd = args[0] if args else []
             if cmd == ["systemctl", "is-active", "firewalld"]:
@@ -71,13 +81,18 @@ class TestFirewall(unittest.TestCase):
 
     def test_ufw_detection_enabled(self):
         """Test UFW detection when enabled."""
+
         def mock_run(*args, **kwargs):
             cmd = args[0] if args else []
 
             if cmd == ["systemctl", "is-active", "firewalld"]:
                 return ("failed", "", 3)  # firewalld not running
             elif cmd == ["ufw", "status"]:
-                return ("Status: active\n\n     To                         Action      From\n     --                         ------      ----\n22/tcp                     ALLOW        Anywhere\n80,443/tcp                ALLOW        Anywhere\n", "", 0)
+                return (
+                    "Status: active\n\n     To                         Action      From\n     --                         ------      ----\n22/tcp                     ALLOW        Anywhere\n80,443/tcp                ALLOW        Anywhere\n",
+                    "",
+                    0,
+                )
             else:
                 return ("", "command not found", 127)
 
@@ -90,6 +105,7 @@ class TestFirewall(unittest.TestCase):
 
     def test_ufw_detection_disabled(self):
         """Test UFW detection when disabled."""
+
         def mock_run(*args, **kwargs):
             cmd = args[0] if args else []
 
@@ -109,6 +125,7 @@ class TestFirewall(unittest.TestCase):
 
     def test_iptables_detection_legacy(self):
         """Test iptables detection as fallback."""
+
         def mock_run(*args, **kwargs):
             cmd = args[0] if args else []
 
@@ -117,7 +134,11 @@ class TestFirewall(unittest.TestCase):
             elif cmd == ["ufw", "status"]:
                 return ("", "command not found", 127)  # ufw not available
             elif cmd == ["iptables", "-L", "-n"]:
-                return ("Chain INPUT (policy ACCEPT)\nChain FORWARD (policy ACCEPT)\nChain OUTPUT (policy ACCEPT)\n", "", 0)
+                return (
+                    "Chain INPUT (policy ACCEPT)\nChain FORWARD (policy ACCEPT)\nChain OUTPUT (policy ACCEPT)\n",
+                    "",
+                    0,
+                )
             else:
                 return ("", "command not found", 127)
 
@@ -130,6 +151,7 @@ class TestFirewall(unittest.TestCase):
 
     def test_fallback_to_none_when_no_firewall(self):
         """Test fallback to 'none' when no firewall tools are available."""
+
         def mock_run(*args, **kwargs):
             cmd = args[0] if args else []
 
@@ -151,6 +173,7 @@ class TestFirewall(unittest.TestCase):
 
     def test_no_firewall_detected(self):
         """Test when no firewall is detected."""
+
         def mock_run(*args, **kwargs):
             cmd = args[0] if args else []
             if cmd == ["systemctl", "is-active", "firewalld"]:
@@ -190,7 +213,6 @@ class TestFirewall(unittest.TestCase):
                 return ("", "", 1)
 
         with patch.object(self.collector, "run_command", side_effect=mock_run):
-
             result = self.collector._get_firewall_status()
 
             self.assertEqual(result["type"], "firewalld")
@@ -260,6 +282,6 @@ class TestFirewall(unittest.TestCase):
             expected_calls = [
                 ["systemctl", "is-active", "firewalld"],
                 ["ufw", "status"],
-                ["iptables", "-L", "-n"]
+                ["iptables", "-L", "-n"],
             ]
             self.assertEqual(call_log, expected_calls)

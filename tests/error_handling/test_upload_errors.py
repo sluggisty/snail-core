@@ -6,29 +6,18 @@ Tests that upload operations handle various failure scenarios gracefully.
 
 from __future__ import annotations
 
-import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
 import requests
 
 from snail_core.config import Config
-import pytest
-
-
-@pytest.mark.integration
 from snail_core.core import CollectionReport, SnailCore
-import pytest
-
-
-@pytest.mark.integration
 from snail_core.uploader import Uploader, UploadError
-import pytest
 
 
 @pytest.mark.integration
-
-
 class TestUploadErrors(unittest.TestCase):
     """Test upload error handling scenarios."""
 
@@ -55,7 +44,11 @@ class TestUploadErrors(unittest.TestCase):
 
     def test_network_connection_error(self):
         """Test handling of network connection errors."""
-        with patch.object(self.uploader.session, 'post', side_effect=requests.exceptions.ConnectionError("Connection refused")):
+        with patch.object(
+            self.uploader.session,
+            "post",
+            side_effect=requests.exceptions.ConnectionError("Connection refused"),
+        ):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -65,7 +58,11 @@ class TestUploadErrors(unittest.TestCase):
 
     def test_timeout_error(self):
         """Test handling of request timeout errors."""
-        with patch.object(self.uploader.session, 'post', side_effect=requests.exceptions.Timeout("Request timed out")):
+        with patch.object(
+            self.uploader.session,
+            "post",
+            side_effect=requests.exceptions.Timeout("Request timed out"),
+        ):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -80,7 +77,7 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.text = "Unauthorized"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -95,7 +92,7 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.text = "Forbidden"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -110,7 +107,7 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.text = "Internal Server Error"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -125,7 +122,7 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.text = "Bad Gateway"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -140,7 +137,7 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.text = "Bad Request"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -155,7 +152,7 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.text = "Not Found"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -165,7 +162,11 @@ class TestUploadErrors(unittest.TestCase):
 
     def test_ssl_tls_error(self):
         """Test handling of SSL/TLS certificate errors."""
-        with patch.object(self.uploader.session, 'post', side_effect=requests.exceptions.SSLError("SSL: CERTIFICATE_VERIFY_FAILED")):
+        with patch.object(
+            self.uploader.session,
+            "post",
+            side_effect=requests.exceptions.SSLError("SSL: CERTIFICATE_VERIFY_FAILED"),
+        ):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -191,7 +192,11 @@ class TestUploadErrors(unittest.TestCase):
 
     def test_request_exception_handling(self):
         """Test handling of general request exceptions."""
-        with patch.object(self.uploader.session, 'post', side_effect=requests.exceptions.RequestException("Network is unreachable")):
+        with patch.object(
+            self.uploader.session,
+            "post",
+            side_effect=requests.exceptions.RequestException("Network is unreachable"),
+        ):
             with self.assertRaises(UploadError) as cm:
                 self.uploader.upload(self.report)
 
@@ -202,6 +207,7 @@ class TestUploadErrors(unittest.TestCase):
     def test_successful_upload_after_retries(self):
         """Test successful upload after some retries."""
         call_count = 0
+
         def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -219,7 +225,7 @@ class TestUploadErrors(unittest.TestCase):
 
             return mock_response
 
-        with patch.object(self.uploader.session, 'post', side_effect=mock_post):
+        with patch.object(self.uploader.session, "post", side_effect=mock_post):
             result = self.uploader.upload(self.report)
 
             self.assertEqual(result["status"], "ok")
@@ -241,13 +247,13 @@ class TestUploadErrors(unittest.TestCase):
         mock_response.ok = True
         mock_response.json.return_value = {"status": "ok"}
 
-        with patch.object(uploader.session, 'post', return_value=mock_response) as mock_post:
+        with patch.object(uploader.session, "post", return_value=mock_response) as mock_post:
             result = uploader.upload(self.report)
 
             # Check that compression headers were sent
             call_args = mock_post.call_args
-            headers = call_args[1]['headers']
-            self.assertEqual(headers.get('Content-Encoding'), 'gzip')
+            headers = call_args[1]["headers"]
+            self.assertEqual(headers.get("Content-Encoding"), "gzip")
 
             self.assertEqual(result["status"], "ok")
 
@@ -256,10 +262,12 @@ class TestUploadErrors(unittest.TestCase):
         core = SnailCore(self.config)
 
         # Mock successful collection
-        with patch.object(core, 'collect', return_value=self.report):
+        with patch.object(core, "collect", return_value=self.report):
             # Mock uploader to fail
-            with patch.object(core, 'uploader') as mock_uploader:
-                mock_uploader.upload.side_effect = UploadError("Upload failed after 3 attempts: Connection error")
+            with patch.object(core, "uploader") as mock_uploader:
+                mock_uploader.upload.side_effect = UploadError(
+                    "Upload failed after 3 attempts: Connection error"
+                )
 
                 report, upload_response = core.collect_and_upload()
 

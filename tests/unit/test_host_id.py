@@ -12,7 +12,7 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
-from snail_core.host_id import DEFAULT_HOST_ID_PATHS, _get_host_id_path, get_host_id, reset_host_id
+from snail_core.host_id import _get_host_id_path, get_host_id, reset_host_id
 
 
 class TestHostIdPathSelection(unittest.TestCase):
@@ -150,7 +150,7 @@ class TestHostIdGeneration(unittest.TestCase):
 
     def test_get_host_id_sets_correct_permissions(self):
         """Test that host ID file gets correct permissions (600)."""
-        host_id = get_host_id(str(self.temp_dir))
+        get_host_id(str(self.temp_dir))
 
         # File should exist and have restrictive permissions
         self.assertTrue(self.host_id_path.exists())

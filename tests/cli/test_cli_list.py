@@ -16,8 +16,6 @@ from snail_core.collectors import COLLECTORS
 
 
 @pytest.mark.cli
-
-
 class TestCliList(unittest.TestCase):
     """Test the 'snail list' command."""
 
@@ -25,12 +23,13 @@ class TestCliList(unittest.TestCase):
         """Set up test runner."""
         self.runner = CliRunner()
         # Completely fresh import to avoid any module state issues
-        if 'snail_core.cli' in sys.modules:
-            del sys.modules['snail_core.cli']
-        if 'snail_core' in sys.modules:
-            del sys.modules['snail_core']
+        if "snail_core.cli" in sys.modules:
+            del sys.modules["snail_core.cli"]
+        if "snail_core" in sys.modules:
+            del sys.modules["snail_core"]
         # Fresh import
         import snail_core.cli
+
         self.main = snail_core.cli.main
 
     def test_list_command_shows_all_collectors(self):
@@ -41,8 +40,16 @@ class TestCliList(unittest.TestCase):
         self.assertIn("Available Collectors", result.output)
 
         # Check that all expected collectors are listed
-        expected_collectors = ["system", "hardware", "network", "packages",
-                              "services", "filesystem", "security", "logs"]
+        expected_collectors = [
+            "system",
+            "hardware",
+            "network",
+            "packages",
+            "services",
+            "filesystem",
+            "security",
+            "logs",
+        ]
 
         for collector_name in expected_collectors:
             self.assertIn(collector_name, result.output)
@@ -77,8 +84,10 @@ class TestCliList(unittest.TestCase):
         expected_count = len(COLLECTORS)
 
         # Count occurrences of collector names in output
-        output_lines = result.output.split('\n')
-        collector_lines = [line for line in output_lines if any(name in line for name in COLLECTORS.keys())]
+        output_lines = result.output.split("\n")
+        collector_lines = [
+            line for line in output_lines if any(name in line for name in COLLECTORS.keys())
+        ]
 
         # Should have at least the expected number (may have header/footer lines)
         self.assertGreaterEqual(len(collector_lines), expected_count)
@@ -90,7 +99,7 @@ class TestCliList(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
         # Should start with empty line then table
-        lines = result.output.strip().split('\n')
+        lines = result.output.strip().split("\n")
         self.assertTrue(len(lines) > 5)  # Should have multiple lines
 
         # Should contain the title

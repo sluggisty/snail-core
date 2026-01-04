@@ -21,6 +21,7 @@ from snail_core import __version__
 from snail_core.auth import ensure_api_key
 from snail_core.config import Config
 from snail_core.core import SnailCore
+from snail_core.host_id import get_host_id, reset_host_id
 
 console = Console()
 
@@ -406,8 +407,6 @@ def host_id(ctx: click.Context, reset: bool) -> None:
     The host ID is a UUID that uniquely identifies this system across all
     collections. It is stored persistently and reused for all uploads.
     """
-    from snail_core.host_id import get_host_id, reset_host_id
-
     config: Config = ctx.obj["config"]
 
     if reset:

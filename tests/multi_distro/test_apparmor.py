@@ -6,7 +6,6 @@ Tests SecurityCollector AppArmor functionality on Ubuntu/Debian/SUSE systems.
 
 from __future__ import annotations
 
-import sys
 import unittest
 from unittest.mock import patch
 
@@ -16,8 +15,6 @@ from snail_core.collectors.security import SecurityCollector
 
 
 @pytest.mark.integration
-
-
 class TestApparmor(unittest.TestCase):
     """Test AppArmor detection and reporting."""
 
@@ -37,7 +34,6 @@ class TestApparmor(unittest.TestCase):
 0 processes are unconfined but have a profile defined."""
 
         with patch.object(self.collector, "run_command", return_value=(mock_output, "", 0)):
-
             result = self.collector._get_apparmor_info()
 
             self.assertTrue(result["enabled"])
@@ -53,7 +49,6 @@ class TestApparmor(unittest.TestCase):
         mock_output = "apparmor module is loaded."
 
         with patch.object(self.collector, "run_command", return_value=(mock_output, "", 0)):
-
             result = self.collector._get_apparmor_info()
 
             self.assertTrue(result["enabled"])
@@ -63,8 +58,9 @@ class TestApparmor(unittest.TestCase):
 
     def test_apparmor_not_available(self):
         """Test AppArmor detection when not available."""
-        with patch.object(self.collector, "run_command", return_value=("", "command not found", 127)):
-
+        with patch.object(
+            self.collector, "run_command", return_value=("", "command not found", 127)
+        ):
             result = self.collector._get_apparmor_info()
 
             self.assertFalse(result["enabled"])
@@ -75,7 +71,6 @@ class TestApparmor(unittest.TestCase):
     def test_apparmor_command_error(self):
         """Test AppArmor detection when command returns error."""
         with patch.object(self.collector, "run_command", return_value=("", "permission denied", 1)):
-
             result = self.collector._get_apparmor_info()
 
             self.assertFalse(result["enabled"])
@@ -85,38 +80,45 @@ class TestApparmor(unittest.TestCase):
         """Test AppArmor output parsing with various edge cases."""
         test_cases = [
             # No profiles loaded
-            ("apparmor module is loaded.\n0 profiles are loaded.",
-             {"loaded": 0, "enforce": 0, "complain": 0},
-             {"defined": 0, "enforce": 0, "complain": 0, "unconfined": 0}),
-
+            (
+                "apparmor module is loaded.\n0 profiles are loaded.",
+                {"loaded": 0, "enforce": 0, "complain": 0},
+                {"defined": 0, "enforce": 0, "complain": 0, "unconfined": 0},
+            ),
             # Only enforce mode
-            ("apparmor module is loaded.\n15 profiles are loaded.\n15 profiles are in enforce mode.",
-             {"loaded": 15, "enforce": 15, "complain": 0},
-             {"defined": 0, "enforce": 0, "complain": 0, "unconfined": 0}),
-
+            (
+                "apparmor module is loaded.\n15 profiles are loaded.\n15 profiles are in enforce mode.",
+                {"loaded": 15, "enforce": 15, "complain": 0},
+                {"defined": 0, "enforce": 0, "complain": 0, "unconfined": 0},
+            ),
             # Malformed numbers
-            ("apparmor module is loaded.\ninvalid profiles are loaded.\nabc profiles are in enforce mode.",
-             {},
-             {}),
-
+            (
+                "apparmor module is loaded.\ninvalid profiles are loaded.\nabc profiles are in enforce mode.",
+                {},
+                {},
+            ),
             # Extra whitespace
-            ("apparmor module is loaded.\n  5 profiles are loaded.\n  3 profiles are in enforce mode.  ",
-             {"loaded": 5, "enforce": 3, "complain": 0},
-             {"defined": 0, "enforce": 0, "complain": 0, "unconfined": 0}),
+            (
+                "apparmor module is loaded.\n  5 profiles are loaded.\n  3 profiles are in enforce mode.  ",
+                {"loaded": 5, "enforce": 3, "complain": 0},
+                {"defined": 0, "enforce": 0, "complain": 0, "unconfined": 0},
+            ),
         ]
 
         for mock_output, expected_profiles, expected_processes in test_cases:
             with self.subTest(output=mock_output[:50]):
                 with patch.object(self.collector, "run_command", return_value=(mock_output, "", 0)):
-
                     result = self.collector._get_apparmor_info()
 
                     self.assertTrue(result["enabled"])
                     self.assertTrue(result["available"])
 
                     for key, expected_value in expected_profiles.items():
-                        self.assertEqual(result["profiles"].get(key, 0), expected_value,
-                                       f"Profile {key} mismatch")
+                        self.assertEqual(
+                            result["profiles"].get(key, 0),
+                            expected_value,
+                            f"Profile {key} mismatch",
+                        )
 
                     # Note: processes are not parsed by current implementation
                     self.assertNotIn("processes", result)
@@ -133,7 +135,6 @@ class TestApparmor(unittest.TestCase):
 1 processes are unconfined but have a profile defined."""
 
         with patch.object(self.collector, "run_command", return_value=(mock_output, "", 0)):
-
             result = self.collector._get_apparmor_info()
 
             self.assertTrue(result["enabled"])
@@ -156,7 +157,6 @@ class TestApparmor(unittest.TestCase):
 1 processes are unconfined but have a profile defined."""
 
         with patch.object(self.collector, "run_command", return_value=(mock_output, "", 0)):
-
             result = self.collector._get_apparmor_info()
 
             self.assertTrue(result["enabled"])

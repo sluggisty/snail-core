@@ -8,4 +8,7 @@ to a custom endpoint, inspired by Red Hat's insights-core.
 __version__ = "0.5.4"
 __author__ = "Sluggisty"
 
-__all__ = ["__version__"]
+# Import main modules to make them available as package attributes
+from . import cli, collectors, config, core, uploader
+
+__all__ = ["__version__", "cli", "collectors", "config", "core", "uploader"]

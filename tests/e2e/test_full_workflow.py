@@ -7,24 +7,18 @@ Tests the full system workflow from configuration to upload verification.
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from snail_core.config import Config
-import pytest
-
-
-@pytest.mark.e2e
 from snail_core.core import CollectionReport, SnailCore
-import pytest
 
 
 @pytest.mark.e2e
-
-
 class TestFullWorkflow(unittest.TestCase):
     """Test complete collection and upload workflow."""
 
@@ -61,17 +55,18 @@ class TestFullWorkflow(unittest.TestCase):
             snail_version="1.0.0",
             results={
                 "system": {"os": "Linux", "hostname": "test-host"},
-                "hardware": {"cpu": "Intel", "memory": "8GB"}
-            }
+                "hardware": {"cpu": "Intel", "memory": "8GB"},
+            },
         )
 
         # Mock successful upload
         mock_upload_response = {"status": "success", "report_id": "12345"}
 
-        with patch.object(core, 'collect', return_value=mock_report), \
-             patch.object(core.uploader.session, 'post') as mock_post, \
-             patch('snail_core.core.ensure_api_key', return_value=True):
-
+        with (
+            patch.object(core, "collect", return_value=mock_report),
+            patch.object(core.uploader.session, "post") as mock_post,
+            patch("snail_core.core.ensure_api_key", return_value=True),
+        ):
             # Mock successful HTTP response
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -103,7 +98,7 @@ class TestFullWorkflow(unittest.TestCase):
             self.assertEqual(call_args[0][0], "https://test.example.com/api/upload")
 
             # Check that headers were passed
-            headers = call_args[1]['headers']
+            headers = call_args[1]["headers"]
             self.assertIn("Content-Encoding", headers)
             self.assertEqual(headers["Content-Encoding"], "gzip")
 
@@ -112,10 +107,13 @@ class TestFullWorkflow(unittest.TestCase):
         core = SnailCore(self.config)
 
         # Mock minimal collection
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'system': lambda: MockCollector("system", {"os": "Linux"}),
-            'hardware': lambda: MockCollector("hardware", {"cpu": "Intel"})
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors",
+            return_value={
+                "system": lambda: MockCollector("system", {"os": "Linux"}),
+                "hardware": lambda: MockCollector("hardware", {"cpu": "Intel"}),
+            },
+        ):
             report = core.collect()
 
             # Validate report structure
@@ -148,8 +146,6 @@ class TestFullWorkflow(unittest.TestCase):
 
     def test_upload_payload_validation(self):
         """Test that upload payloads are correctly formatted."""
-        core = SnailCore(self.config)
-
         # Create a test report
         test_report = CollectionReport(
             hostname="test-host",
@@ -157,7 +153,7 @@ class TestFullWorkflow(unittest.TestCase):
             collection_id="test-collection-id",
             timestamp="2024-01-01T00:00:00Z",
             snail_version="1.0.0",
-            results={"test": {"data": "value"}}
+            results={"test": {"data": "value"}},
         )
 
         # Get the payload that would be uploaded
@@ -190,16 +186,11 @@ class TestFullWorkflow(unittest.TestCase):
     def test_authentication_verification(self):
         """Test that authentication headers are properly set."""
         config = Config(
-            upload_url="https://test.example.com",
-            api_key="test-api-key-123",
-            upload_enabled=True
+            upload_url="https://test.example.com", api_key="test-api-key-123", upload_enabled=True
         )
 
         from snail_core.uploader import Uploader
-import pytest
 
-
-@pytest.mark.e2e
         uploader = Uploader(config)
 
         # Check that API key is set in session headers
@@ -207,7 +198,9 @@ import pytest
         self.assertEqual(uploader.session.headers["X-API-Key"], "test-api-key-123")
 
         # Check other default headers
-        self.assertEqual(uploader.session.headers["User-Agent"], f"snail-core/{uploader._get_version()}")
+        self.assertEqual(
+            uploader.session.headers["User-Agent"], f"snail-core/{uploader._get_version()}"
+        )
         self.assertEqual(uploader.session.headers["Content-Type"], "application/json")
         self.assertEqual(uploader.session.headers["Accept"], "application/json")
 
@@ -216,23 +209,14 @@ import pytest
         import gzip
 
         config = Config(
-            upload_url="https://test.example.com",
-            api_key="test-key",
-            compress_output=True
+            upload_url="https://test.example.com", api_key="test-key", compress_output=True
         )
 
         from snail_core.uploader import Uploader
-import pytest
 
-
-@pytest.mark.e2e
         uploader = Uploader(config)
 
         test_data = {"test": "data", "numbers": [1, 2, 3], "nested": {"key": "value"}}
-        json_data = json.dumps(test_data, default=str)
-
-        # Compress the data
-        compressed_data = gzip.compress(json_data.encode("utf-8"))
 
         # Mock the HTTP response
         mock_response = MagicMock()
@@ -241,29 +225,31 @@ import pytest
         mock_response.ok = True
         mock_response.json.return_value = {"status": "ok"}
 
-        with patch.object(uploader.session, 'post', return_value=mock_response) as mock_post:
-            result = uploader.upload(CollectionReport(
-                hostname="test",
-                host_id="test-id",
-                collection_id="test-collection",
-                timestamp="2024-01-01T00:00:00Z",
-                snail_version="1.0.0",
-                results=test_data
-            ))
+        with patch.object(uploader.session, "post", return_value=mock_response) as mock_post:
+            result = uploader.upload(
+                CollectionReport(
+                    hostname="test",
+                    host_id="test-id",
+                    collection_id="test-collection",
+                    timestamp="2024-01-01T00:00:00Z",
+                    snail_version="1.0.0",
+                    results=test_data,
+                )
+            )
 
             # Verify upload was called
             self.assertEqual(result["status"], "ok")
 
             # Verify compression was applied
             call_args = mock_post.call_args
-            sent_headers = call_args[1]['headers']
+            sent_headers = call_args[1]["headers"]
 
             # Should be compressed
             self.assertIn("Content-Encoding", sent_headers)
             self.assertEqual(sent_headers["Content-Encoding"], "gzip")
 
             # Should be able to decompress the sent data
-            sent_data = call_args[1]['data']  # data is in kwargs
+            sent_data = call_args[1]["data"]  # data is in kwargs
             decompressed = gzip.decompress(sent_data).decode("utf-8")
             parsed_data = json.loads(decompressed)
             self.assertEqual(parsed_data["data"], test_data)
@@ -279,12 +265,13 @@ import pytest
             collection_id="test-collection-id",
             timestamp="2024-01-01T00:00:00Z",
             snail_version="1.0.0",
-            results={"system": {"os": "Linux"}}
+            results={"system": {"os": "Linux"}},
         )
 
-        with patch.object(core, 'collect', return_value=mock_report), \
-             patch.object(core.uploader, 'upload', side_effect=Exception("Upload failed")):
-
+        with (
+            patch.object(core, "collect", return_value=mock_report),
+            patch.object(core.uploader, "upload", side_effect=Exception("Upload failed")),
+        ):
             # Execute workflow
             report, upload_response = core.collect_and_upload()
 
@@ -302,10 +289,13 @@ import pytest
     def test_workflow_with_collection_failure(self):
         """Test workflow when collection partially fails."""
         # Mock collectors before SnailCore initialization
-        with patch('snail_core.core.get_all_collectors', return_value={
-            'success_collector': SuccessCollector,
-            'failing_collector': FailingCollector
-        }):
+        with patch(
+            "snail_core.core.get_all_collectors",
+            return_value={
+                "success_collector": SuccessCollector,
+                "failing_collector": FailingCollector,
+            },
+        ):
             core = SnailCore(self.config)
             report, upload_response = core.collect_and_upload()
 
@@ -346,13 +336,17 @@ import pytest
         self.assertEqual(core.config.collection_timeout, 120)
 
         # Run workflow (will fail on upload but that's ok)
-        with patch.object(core, 'collect', return_value=CollectionReport(
-            hostname="test",
-            host_id="test-id",
-            collection_id="test-collection",
-            timestamp="2024-01-01T00:00:00Z",
-            snail_version="1.0.0"
-        )):
+        with patch.object(
+            core,
+            "collect",
+            return_value=CollectionReport(
+                hostname="test",
+                host_id="test-id",
+                collection_id="test-collection",
+                timestamp="2024-01-01T00:00:00Z",
+                snail_version="1.0.0",
+            ),
+        ):
             report, upload_response = core.collect_and_upload()
 
             # Should use the configured upload URL

@@ -7,11 +7,8 @@ and distribution detection.
 
 from __future__ import annotations
 
-import builtins
-import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -33,6 +30,7 @@ class TestBaseCollectorAbstract:
 
     def test_collect_raises_not_implemented(self):
         """Test that abstract collect() prevents instantiation when not implemented."""
+
         # ABC raises TypeError at instantiation time when abstract method isn't implemented
         class IncompleteCollector(BaseCollector):
             name = "incomplete"
@@ -191,7 +189,7 @@ class TestBaseCollectorParseKeyValueFile:
         """Test parsing strips quotes from values."""
         collector = ConcreteCollector()
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-            f.write('key1="quoted value"\nkey2=\'single quoted\'')
+            f.write("key1=\"quoted value\"\nkey2='single quoted'")
             temp_path = f.name
 
         try:
@@ -228,4 +226,3 @@ class TestBaseCollectorDetectDistro:
         result = collector.detect_distro()
         assert isinstance(result, dict)
         assert len(result) >= 4  # Should have at least id, version, name, like
-

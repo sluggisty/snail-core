@@ -6,22 +6,16 @@ Tests that collectors handle command failures gracefully.
 
 from __future__ import annotations
 
-import sys
 import unittest
 from unittest.mock import patch
 
+import pytest
+
 from snail_core.collectors.base import BaseCollector
-import pytest
-
-
-@pytest.mark.integration
 from snail_core.collectors.system import SystemCollector
-import pytest
 
 
 @pytest.mark.integration
-
-
 class FailingCollector(BaseCollector):
     """Test collector that simulates command failures."""
 
@@ -30,14 +24,14 @@ class FailingCollector(BaseCollector):
 
     def collect(self):
         # Try to run a command that will fail
-        stdout, stderr, rc = self.run_command(['nonexistent_command_12345'])
+        stdout, stderr, rc = self.run_command(["nonexistent_command_12345"])
         if rc != 0:
             # This should not crash the collector
             return {
                 "command_result": "failed_gracefully",
                 "stdout": stdout,
                 "stderr": stderr,
-                "returncode": rc
+                "returncode": rc,
             }
         return {"status": "unexpected_success"}
 
@@ -52,40 +46,25 @@ class CommandErrorCollector(BaseCollector):
         result = {}
 
         # Test 1: Missing command
-        stdout, stderr, rc = self.run_command(['this_command_does_not_exist'])
-        result["missing_command"] = {
-            "stdout": stdout,
-            "stderr": stderr,
-            "returncode": rc
-        }
+        stdout, stderr, rc = self.run_command(["this_command_does_not_exist"])
+        result["missing_command"] = {"stdout": stdout, "stderr": stderr, "returncode": rc}
 
         # Test 2: Command with non-zero exit
-        stdout, stderr, rc = self.run_command(['false'])  # Command that always fails
-        result["false_command"] = {
-            "stdout": stdout,
-            "stderr": stderr,
-            "returncode": rc
-        }
+        stdout, stderr, rc = self.run_command(["false"])  # Command that always fails
+        result["false_command"] = {"stdout": stdout, "stderr": stderr, "returncode": rc}
 
         # Test 3: Permission denied (try to access /root)
-        stdout, stderr, rc = self.run_command(['cat', '/root/secret_file'])
-        result["permission_denied"] = {
-            "stdout": stdout,
-            "stderr": stderr,
-            "returncode": rc
-        }
+        stdout, stderr, rc = self.run_command(["cat", "/root/secret_file"])
+        result["permission_denied"] = {"stdout": stdout, "stderr": stderr, "returncode": rc}
 
         # Test 4: Invalid output parsing (should not crash)
         try:
             # This might produce output that can't be parsed as expected
-            stdout, stderr, rc = self.run_command(['echo', 'invalid output format'])
+            stdout, stderr, rc = self.run_command(["echo", "invalid output format"])
             # Try to parse as if it were structured data
             if stdout.strip():
-                parsed = stdout.strip().split(' ')
-                result["parsing_test"] = {
-                    "parsed": parsed,
-                    "success": True
-                }
+                parsed = stdout.strip().split(" ")
+                result["parsing_test"] = {"parsed": parsed, "success": True}
             else:
                 result["parsing_test"] = {"success": False, "reason": "empty_output"}
         except Exception as e:
@@ -148,14 +127,14 @@ class TestCollectorErrors(unittest.TestCase):
         original_run_command = collector.run_command
 
         def mock_run_command(cmd, **kwargs):
-            if cmd == ['hostname']:
+            if cmd == ["hostname"]:
                 return ("", "command not found: hostname", -1)
-            elif cmd == ['uptime']:
+            elif cmd == ["uptime"]:
                 return ("", "command not found: uptime", -1)
             else:
                 return original_run_command(cmd, **kwargs)
 
-        with patch.object(collector, 'run_command', side_effect=mock_run_command):
+        with patch.object(collector, "run_command", side_effect=mock_run_command):
             result = collector.collect()
 
             # Should still return a result structure
@@ -183,7 +162,7 @@ class TestCollectorErrors(unittest.TestCase):
         collector = FailingCollector()
 
         # This should not raise an exception
-        stdout, stderr, rc = collector.run_command(['false'], check=False)
+        stdout, stderr, rc = collector.run_command(["false"], check=False)
 
         self.assertNotEqual(rc, 0)  # Command should fail
         # But no exception should be raised
@@ -192,14 +171,17 @@ class TestCollectorErrors(unittest.TestCase):
         """Test that run_command preserves stdout/stderr even on failure."""
         collector = FailingCollector()
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             from subprocess import CalledProcessError
-            mock_run.side_effect = CalledProcessError(1, ['failing_cmd'], 'some output', 'some error')
 
-            stdout, stderr, rc = collector.run_command(['failing_cmd'])
+            mock_run.side_effect = CalledProcessError(
+                1, ["failing_cmd"], "some output", "some error"
+            )
 
-            self.assertEqual(stdout, 'some output')
-            self.assertEqual(stderr, 'some error')
+            stdout, stderr, rc = collector.run_command(["failing_cmd"])
+
+            self.assertEqual(stdout, "some output")
+            self.assertEqual(stderr, "some error")
             self.assertEqual(rc, 1)
 
     def test_collector_error_does_not_prevent_other_data_collection(self):
@@ -210,6 +192,7 @@ class TestCollectorErrors(unittest.TestCase):
         original_run_command = collector.run_command
 
         call_count = 0
+
         def mock_run_command(cmd, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -221,7 +204,7 @@ class TestCollectorErrors(unittest.TestCase):
             else:  # Subsequent calls succeed
                 return original_run_command(cmd, **kwargs)
 
-        with patch.object(collector, 'run_command', side_effect=mock_run_command):
+        with patch.object(collector, "run_command", side_effect=mock_run_command):
             result = collector.collect()
 
             # Should still collect all data
@@ -234,7 +217,7 @@ class TestCollectorErrors(unittest.TestCase):
         """Test that command error messages provide useful information."""
         collector = FailingCollector()
 
-        stdout, stderr, rc = collector.run_command(['nonexistent_command_12345'])
+        stdout, stderr, rc = collector.run_command(["nonexistent_command_12345"])
 
         self.assertEqual(rc, -1)
         self.assertIn("nonexistent_command_12345", stderr)

@@ -6,17 +6,15 @@ Tests auto-detection and fallback behavior when standard detection fails.
 
 from __future__ import annotations
 
-import sys
 import unittest
 from unittest.mock import patch
 
-from snail_core.collectors.packages import PackagesCollector
 import pytest
+
+from snail_core.collectors.packages import PackagesCollector
 
 
 @pytest.mark.integration
-
-
 class TestPackageManagerFallback(unittest.TestCase):
     """Test package manager fallback and auto-detection."""
 
@@ -26,9 +24,10 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def test_unknown_distribution_fallback(self):
         """Test fallback behavior for unknown distributions."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "unknown-distro"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "unknown-distro"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             # Mock some basic commands that might be available
             mock_run.side_effect = lambda *args, **kwargs: ("", "", 1)  # All commands fail
 
@@ -40,9 +39,10 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def test_auto_detection_with_multiple_package_managers(self):
         """Test auto-detection when multiple package managers are available."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "unknown"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "unknown"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             call_log = []
 
             def mock_command(*args, **kwargs):
@@ -73,8 +73,10 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def test_rpm_fallback_when_no_specific_manager(self):
         """Test fallback to basic RPM when no specific package manager is available."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "fedora"}), \
-             patch.object(self.collector, "run_command") as mock_run:
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "fedora"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
 
             def mock_command(*args, **kwargs):
                 cmd = args[0] if args else []
@@ -103,9 +105,12 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def test_distribution_like_detection(self):
         """Test distribution detection using 'like' field."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "custom", "like": "fedora"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(
+                self.collector, "detect_distro", return_value={"id": "custom", "like": "fedora"}
+            ),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_dnf_commands()
 
             result = self.collector.collect()
@@ -115,9 +120,12 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def test_distribution_like_debian_detection(self):
         """Test Debian-like distribution detection."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "custom", "like": "debian"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(
+                self.collector, "detect_distro", return_value={"id": "custom", "like": "debian"}
+            ),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             mock_run.side_effect = self._mock_apt_commands()
 
             result = self.collector.collect()
@@ -127,9 +135,10 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def test_all_package_managers_unavailable(self):
         """Test behavior when no package managers are available."""
-        with patch.object(self.collector, "detect_distro", return_value={"id": "minimal"}), \
-             patch.object(self.collector, "run_command") as mock_run:
-
+        with (
+            patch.object(self.collector, "detect_distro", return_value={"id": "minimal"}),
+            patch.object(self.collector, "run_command") as mock_run,
+        ):
             # All commands fail
             mock_run.return_value = ("", "", 1)
 
@@ -152,9 +161,10 @@ class TestPackageManagerFallback(unittest.TestCase):
 
         for distro_info, expected_manager in test_cases:
             with self.subTest(distro=distro_info["id"]):
-                with patch.object(self.collector, "detect_distro", return_value=distro_info), \
-                     patch.object(self.collector, "run_command") as mock_run:
-
+                with (
+                    patch.object(self.collector, "detect_distro", return_value=distro_info),
+                    patch.object(self.collector, "run_command") as mock_run,
+                ):
                     if expected_manager == "dnf":
                         mock_run.side_effect = self._mock_dnf_commands()
                     elif expected_manager == "apt":
@@ -168,6 +178,7 @@ class TestPackageManagerFallback(unittest.TestCase):
 
     def _mock_dnf_commands(self):
         """Mock DNF commands for fallback testing."""
+
         def mock_command(*args, **kwargs):
             cmd = args[0] if args else []
             if not cmd:
@@ -181,10 +192,12 @@ class TestPackageManagerFallback(unittest.TestCase):
                 return ("kernel-1.0\nbash-2.0\n", "", 0)
 
             return ("", "", 1)
+
         return mock_command
 
     def _mock_apt_commands(self):
         """Mock APT commands for fallback testing."""
+
         def mock_command(*args, **kwargs):
             cmd = args[0] if args else []
             if not cmd:
@@ -194,10 +207,12 @@ class TestPackageManagerFallback(unittest.TestCase):
                 return ("ii  bash    5.0    amd64    GNU Bourne Again SHell\n", "", 0)
 
             return ("", "", 1)
+
         return mock_command
 
     def _mock_zypper_commands(self):
         """Mock Zypper commands for fallback testing."""
+
         def mock_command(*args, **kwargs):
             cmd = args[0] if args else []
             if not cmd:
@@ -209,4 +224,5 @@ class TestPackageManagerFallback(unittest.TestCase):
                 return ("kernel-1.0\nbash-2.0\n", "", 0)
 
             return ("", "", 1)
+
         return mock_command

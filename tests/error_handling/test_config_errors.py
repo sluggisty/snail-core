@@ -12,15 +12,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 import yaml
 
 from snail_core.config import Config
-import pytest
 
 
 @pytest.mark.integration
-
-
 class TestConfigErrors(unittest.TestCase):
     """Test configuration error handling."""
 
@@ -36,7 +34,7 @@ class TestConfigErrors(unittest.TestCase):
                 file_path.unlink()
         self.temp_dir.rmdir()
 
-    def create_test_file(self, content: str, filename: str = "test.yaml") -> Path:
+    def create_test_file(self, content: str, filename: str = "test.yaml"):
         """Create a test config file."""
         file_path = self.temp_dir / filename
         file_path.write_text(content)
@@ -232,7 +230,9 @@ class TestConfigErrors(unittest.TestCase):
 
             # Invalid env vars should be ignored, use config file values
             self.assertEqual(config.upload_timeout, 30)  # From config file
-            self.assertFalse(config.upload_enabled)  # Overridden by invalid env var (converted to False)
+            self.assertFalse(
+                config.upload_enabled
+            )  # Overridden by invalid env var (converted to False)
 
     def test_config_file_search_order(self):
         """Test that config files are searched in the correct order."""
@@ -256,7 +256,7 @@ class TestConfigErrors(unittest.TestCase):
         self.assertEqual(config.upload_url, "https://explicit.example.com")
 
         # Test default path search
-        with patch('snail_core.config.DEFAULT_CONFIG_PATHS', [default_file]):
+        with patch("snail_core.config.DEFAULT_CONFIG_PATHS", [default_file]):
             config = Config.load()
             self.assertEqual(config.upload_url, "https://default.example.com")
 
@@ -298,7 +298,9 @@ class TestConfigErrors(unittest.TestCase):
 
         config = Config.load(config_file)
 
-        self.assertEqual(config.upload_url, "https://user:password@example.com/path?query=value#fragment")
+        self.assertEqual(
+            config.upload_url, "https://user:password@example.com/path?query=value#fragment"
+        )
         self.assertEqual(config.api_key, "special_chars:!@#$%^&*()")
         self.assertEqual(config.output_dir, "/path/with spaces/and/symbols-_.~")
 
@@ -323,16 +325,17 @@ class TestConfigErrors(unittest.TestCase):
         test_cases = [
             # Empty dict
             ({}, lambda c: c.upload_url is None),
-
             # Only unknown fields
             ({"unknown_field": "value", "another_unknown": 123}, lambda c: c.upload_url is None),
-
             # Mix of known and unknown
-            ({
-                "upload_url": "https://example.com",
-                "unknown_field": "filtered",
-                "upload_enabled": False,
-            }, lambda c: c.upload_url == "https://example.com" and c.upload_enabled is False),
+            (
+                {
+                    "upload_url": "https://example.com",
+                    "unknown_field": "filtered",
+                    "upload_enabled": False,
+                },
+                lambda c: c.upload_url == "https://example.com" and c.upload_enabled is False,
+            ),
         ]
 
         for config_dict, validator in test_cases:

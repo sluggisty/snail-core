@@ -14,12 +14,10 @@ from unittest.mock import patch
 
 import pytest
 
-from snail_core.config import Config, DEFAULT_CONFIG_PATHS
+from snail_core.config import Config
 
 
 @pytest.mark.integration
-
-
 class TestConfigIntegration(unittest.TestCase):
     """Integration tests for configuration loading and precedence."""
 
@@ -154,7 +152,9 @@ upload_timeout: 30
         local_config.write_text("upload_url: https://local.example.com/api\nlog_level: INFO")
 
         # Mock the DEFAULT_CONFIG_PATHS to use our test files
-        with patch("snail_core.config.DEFAULT_CONFIG_PATHS", [system_config, user_config, local_config]):
+        with patch(
+            "snail_core.config.DEFAULT_CONFIG_PATHS", [system_config, user_config, local_config]
+        ):
             config = Config.load()
 
             # Should load from first existing file (system_config)
@@ -204,9 +204,19 @@ upload_timeout: 30
     def test_environment_variable_boolean_variants(self):
         """Test various boolean representations in environment variables."""
         test_cases = [
-            ("true", True), ("TRUE", True), ("True", True), ("1", True), ("yes", True), ("YES", True),
-            ("false", False), ("FALSE", False), ("False", False), ("0", False), ("no", False), ("NO", False),
-            ("anything_else", False)
+            ("true", True),
+            ("TRUE", True),
+            ("True", True),
+            ("1", True),
+            ("yes", True),
+            ("YES", True),
+            ("false", False),
+            ("FALSE", False),
+            ("False", False),
+            ("0", False),
+            ("no", False),
+            ("NO", False),
+            ("anything_else", False),
         ]
 
         for env_value, expected_bool in test_cases:

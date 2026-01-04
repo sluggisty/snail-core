@@ -6,25 +6,17 @@ Tests that upload retry logic works correctly for different error scenarios.
 
 from __future__ import annotations
 
-import sys
-import time
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
 import requests
 
 from snail_core.config import Config
-import pytest
-
-
-@pytest.mark.integration
 from snail_core.uploader import Uploader, UploadResult
-import pytest
 
 
 @pytest.mark.integration
-
-
 class TestUploadRetries(unittest.TestCase):
     """Test upload retry logic and exponential backoff."""
 
@@ -42,6 +34,7 @@ class TestUploadRetries(unittest.TestCase):
     def test_retry_on_500_errors(self):
         """Test that 500 errors trigger retries."""
         call_count = 0
+
         def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -53,7 +46,7 @@ class TestUploadRetries(unittest.TestCase):
 
             return mock_response
 
-        with patch.object(self.uploader.session, 'post', side_effect=mock_post):
+        with patch.object(self.uploader.session, "post", side_effect=mock_post):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -62,10 +55,11 @@ class TestUploadRetries(unittest.TestCase):
 
     def test_retry_on_connection_errors(self):
         """Test that connection errors trigger retries."""
+
         def mock_post(*args, **kwargs):
             raise requests.exceptions.ConnectionError("Connection refused")
 
-        with patch.object(self.uploader.session, 'post', side_effect=mock_post):
+        with patch.object(self.uploader.session, "post", side_effect=mock_post):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -74,10 +68,11 @@ class TestUploadRetries(unittest.TestCase):
 
     def test_retry_on_timeout_errors(self):
         """Test that timeout errors trigger retries."""
+
         def mock_post(*args, **kwargs):
             raise requests.exceptions.Timeout("Request timed out")
 
-        with patch.object(self.uploader.session, 'post', side_effect=mock_post):
+        with patch.object(self.uploader.session, "post", side_effect=mock_post):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -91,7 +86,7 @@ class TestUploadRetries(unittest.TestCase):
         mock_response.text = "Bad Request"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -105,7 +100,7 @@ class TestUploadRetries(unittest.TestCase):
         mock_response.text = "Unauthorized"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -119,7 +114,7 @@ class TestUploadRetries(unittest.TestCase):
         mock_response.text = "Forbidden"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -133,7 +128,7 @@ class TestUploadRetries(unittest.TestCase):
         mock_response.text = "Not Found"
         mock_response.ok = False
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -154,9 +149,9 @@ class TestUploadRetries(unittest.TestCase):
             mock_response.ok = False
             return mock_response
 
-        with patch.object(self.uploader.session, 'post', side_effect=mock_post):
-            with patch('time.sleep', side_effect=mock_sleep):
-                result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
+        with patch.object(self.uploader.session, "post", side_effect=mock_post):
+            with patch("time.sleep", side_effect=mock_sleep):
+                self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
                 # Should have slept 2 times (between attempts 1-2 and 2-3)
                 self.assertEqual(len(sleep_calls), 2)
@@ -173,6 +168,7 @@ class TestUploadRetries(unittest.TestCase):
         uploader = Uploader(config)
 
         call_count = 0
+
         def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -183,7 +179,7 @@ class TestUploadRetries(unittest.TestCase):
             mock_response.ok = False
             return mock_response
 
-        with patch.object(uploader.session, 'post', side_effect=mock_post):
+        with patch.object(uploader.session, "post", side_effect=mock_post):
             result = uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertFalse(result.success)
@@ -208,9 +204,9 @@ class TestUploadRetries(unittest.TestCase):
             mock_response.ok = False
             return mock_response
 
-        with patch.object(uploader.session, 'post', side_effect=mock_post):
-            with patch('time.sleep', side_effect=mock_sleep):
-                result = uploader._upload_with_retry("https://test.example.com", b"{}", {})
+        with patch.object(uploader.session, "post", side_effect=mock_post):
+            with patch("time.sleep", side_effect=mock_sleep):
+                uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
                 # Check that no backoff exceeds 30 seconds (the max)
                 for delay in sleep_calls:
@@ -237,7 +233,7 @@ class TestUploadRetries(unittest.TestCase):
                 mock_response.json.return_value = {"status": "success"}
                 return mock_response
 
-        with patch.object(self.uploader.session, 'post', side_effect=mock_post):
+        with patch.object(self.uploader.session, "post", side_effect=mock_post):
             result = self.uploader._upload_with_retry("https://test.example.com", b"{}", {})
 
             self.assertTrue(result.success)
@@ -253,7 +249,7 @@ class TestUploadRetries(unittest.TestCase):
             status_code=200,
             response_data={"status": "ok"},
             attempts=1,
-            duration_ms=150.5
+            duration_ms=150.5,
         )
 
         self.assertTrue(success_result.success)
@@ -265,10 +261,7 @@ class TestUploadRetries(unittest.TestCase):
 
         # Test failure result
         failure_result = UploadResult(
-            success=False,
-            error="Connection failed",
-            attempts=3,
-            duration_ms=2500.0
+            success=False, error="Connection failed", attempts=3, duration_ms=2500.0
         )
 
         self.assertFalse(failure_result.success)
@@ -286,19 +279,16 @@ class TestUploadRetries(unittest.TestCase):
         mock_response.ok = True
         mock_response.json.side_effect = ValueError("Invalid JSON")
 
-        with patch.object(self.uploader.session, 'post', return_value=mock_response):
+        with patch.object(self.uploader.session, "post", return_value=mock_response):
             # Create a test report for upload
             from snail_core.core import CollectionReport
-import pytest
 
-
-@pytest.mark.integration
             test_report = CollectionReport(
                 hostname="test",
                 host_id="test-id",
                 collection_id="test-collection",
                 timestamp="2024-01-01T00:00:00Z",
-                snail_version="1.0.0"
+                snail_version="1.0.0",
             )
             result = self.uploader.upload(test_report)
 

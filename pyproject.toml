@@ -64,17 +64,18 @@ target-version = ["py39", "py310", "py311", "py312"]
 line-length = 100
 target-version = "py39"
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["snail_core"]
+multi_line_output = 3
+include_trailing_comma = true
 
 [tool.pytest.ini_options]
 # Test discovery and execution

@@ -8,9 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-import psutil
-
 from snail_core.collectors.network import NetworkCollector
 
 
@@ -41,9 +38,9 @@ class TestNetworkCollector:
 
         mock_psutil.net_if_addrs.return_value = {"eth0": [mock_addr]}
         mock_psutil.net_if_stats.return_value = {"eth0": MagicMock(isup=True, speed=1000, mtu=1500)}
-        mock_psutil.net_io_counters.return_value = {"eth0": MagicMock(
-            bytes_sent=1000, bytes_recv=2000, packets_sent=10, packets_recv=20
-        )}
+        mock_psutil.net_io_counters.return_value = {
+            "eth0": MagicMock(bytes_sent=1000, bytes_recv=2000, packets_sent=10, packets_recv=20)
+        }
 
         result = collector._get_interfaces()
         assert isinstance(result, list)
@@ -91,11 +88,11 @@ class TestNetworkCollector:
 
         # Test firewalld detection - use side_effect list to handle all calls
         mock_calls = [
-            ("running", "", 0),   # firewall-cmd --state
-            ("public", "", 0),    # firewall-cmd --get-default-zone
-            ("public", "", 0),    # firewall-cmd --get-active-zones
-            ("", "", 1),          # iptables -L -n (not accessible)
-            ("", "", 1),          # nft list tables (not accessible)
+            ("running", "", 0),  # firewall-cmd --state
+            ("public", "", 0),  # firewall-cmd --get-default-zone
+            ("public", "", 0),  # firewall-cmd --get-active-zones
+            ("", "", 1),  # iptables -L -n (not accessible)
+            ("", "", 1),  # nft list tables (not accessible)
         ]
 
         with patch.object(collector, "run_command", side_effect=mock_calls):
@@ -103,4 +100,3 @@ class TestNetworkCollector:
             assert "firewalld" in result
             assert result["firewalld"]["installed"] is True
             assert result["firewalld"]["running"] is True
-

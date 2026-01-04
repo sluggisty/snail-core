@@ -6,9 +6,7 @@ Tests package manager detection and package/repository collection.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from snail_core.collectors.packages import PackagesCollector
 
@@ -20,8 +18,12 @@ class TestPackagesCollector:
         """Test that collect() returns expected structure."""
         collector = PackagesCollector()
 
-        with patch.object(collector, "detect_distro", return_value={"id": "fedora", "like": "rhel"}):
-            with patch.object(collector, "_collect_rpm_based", return_value={"package_manager": "dnf"}):
+        with patch.object(
+            collector, "detect_distro", return_value={"id": "fedora", "like": "rhel"}
+        ):
+            with patch.object(
+                collector, "_collect_rpm_based", return_value={"package_manager": "dnf"}
+            ):
                 result = collector.collect()
                 assert "package_manager" in result
 
@@ -63,11 +65,14 @@ class TestPackagesCollector:
         collector = PackagesCollector()
         mock_output = "x86_64\nx86_64\naarch64\n"
 
-        with patch.object(collector, "run_command", side_effect=[
-            (mock_output, "", 0),  # rpm -qa --qf
-            ("", "", 0),           # gpg-pubkey
-        ]):
+        with patch.object(
+            collector,
+            "run_command",
+            side_effect=[
+                (mock_output, "", 0),  # rpm -qa --qf
+                ("", "", 0),  # gpg-pubkey
+            ],
+        ):
             result = collector._get_rpm_summary()
             assert "total_count" in result
             assert "by_arch" in result
-
